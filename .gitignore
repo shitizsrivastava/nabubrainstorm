@@ -1,0 +1,15 @@
+node_modules/
+dist/
+dist-electron/
+build/
+release/
+release/win-unpacked/
+__pycache__/
+*.pyc
+venv/
+.venv/
+*.log
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+NabuBrainstorm-win32-x64/

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "board-static",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [".claude/obs-test-server.js"],
+      "port": 8934
+    }
+  ]
+}

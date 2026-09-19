@@ -1,0 +1,8 @@
+{
+  "name": "nabu-brainstorm",
+  "version": "1.10.0",
+  "description": "NabuBrainstorm – standalone visual brainstorm board",
+  "main": "main.js",
+  "author": "",
+  "license": "MIT"
+}
