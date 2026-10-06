@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, globalShortcut } = require('electron');
 const path = require('path');
 const fs   = require('fs');
 const https = require('https');
@@ -96,6 +96,15 @@ function handleObsRoutes(req, res, urlPath){
     });
     return true;
   }
+  if (urlPath === '/obs-cmd'){
+    // Trigger a one-at-a-time cut-in from anything that can make an HTTP GET:
+    // the ?remote=1 OBS dock, Stream Deck, a browser bookmark, OBS hotkey scripts…
+    // e.g. /obs-cmd?a=next  /obs-cmd?a=prev  /obs-cmd?a=hide  /obs-cmd?a=goto&n=3
+    const q = new URL(req.url, 'http://x').searchParams;
+    sendShowCmd({ a: q.get('a') || '', n: q.get('n') });
+    res.writeHead(200, { 'Content-Type':'application/json' }); res.end('{"ok":true}');
+    return true;
+  }
   if (urlPath === '/media'){
     // Streams a local media file so the OBS overlay (which cannot use file://
     // URLs) can show video/sound/pdf assets. Server is bound to 127.0.0.1 only.
@@ -135,6 +144,14 @@ function startLocalServer() {
   });
 }
 
+function sendShowCmd(cmd){ if (win && !win.isDestroyed()) win.webContents.send('show-cmd', cmd); }
+// Global hotkeys work even while OBS (or any other app) has focus.
+function registerShowHotkeys(){
+  const keys = { 'CommandOrControl+Alt+Right':'next', 'CommandOrControl+Alt+Left':'prev', 'CommandOrControl+Alt+Down':'hide' };
+  Object.entries(keys).forEach(([k, a]) => { try { globalShortcut.register(k, () => sendShowCmd({ a })); } catch(e){} });
+}
+app.on('will-quit', () => globalShortcut.unregisterAll());
+
 let serverPort = null;
 let notesWin = null;
 
@@ -144,6 +161,7 @@ async function createWindow() {
   win = new BrowserWindow({
     width: 1440, height: 900,
     minWidth: 800, minHeight: 500,
+    icon: path.join(__dirname, 'assets', 'icon.png'),
     frame: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -193,7 +211,7 @@ ipcMain.on('notes-edit', (e, payload) => {
   if (win && !win.isDestroyed()) win.webContents.send('notes-edit', payload);
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => { createWindow(); registerShowHotkeys(); });
 app.on('window-all-closed', () => app.quit());
 
 // ── Window controls ──────────────────────────────────────────────────────────

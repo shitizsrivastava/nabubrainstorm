@@ -12,6 +12,35 @@ body{font-family:'Segoe UI',sans-serif;height:100vh;display:flex;flex-direction:
 .tb-logo{color:#B8860B;font-size:13px;font-weight:700;letter-spacing:0.12em}
 .tb-ver{font-size:9px;color:#6E6A5E;font-family:monospace;letter-spacing:.03em;cursor:default;-webkit-app-region:no-drag}
 .tb-ver:hover{color:#B8860B}
+/* -- One-at-a-time cut-in overlay (?obs=1&mode=solo) -- */
+body.solo-view .canvas{display:none!important}
+#soloLayer{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.solo-wrap{position:absolute;left:50%;top:50%;opacity:0;transition:opacity .35s ease,transform .45s cubic-bezier(.22,.68,.36,1)}
+.solo-wrap .el{position:relative!important;left:0!important;top:0!important;cursor:default;transition:none!important}
+.solo-wrap .serial-badge,.solo-wrap .notes-dot,.solo-wrap .vc-label,.solo-wrap .el-add,.solo-wrap .port-handle,.solo-wrap .rz{display:none!important}
+.solo-wrap .el-video-card{max-width:none!important;background:transparent!important;box-shadow:none!important}
+.solo-wrap video{display:block;max-height:none!important;object-fit:contain!important}
+/* LIVE marker in the main window */
+.el.live-cut::after{content:'● LIVE';position:absolute;top:-22px;right:0;background:#E63946;color:#fff;font:700 10px sans-serif;padding:2px 7px;border-radius:8px;z-index:5}
+/* -- OBS control dock (?remote=1) -- */
+body.remote-view>*:not(#remoteUI){display:none!important}
+body.remote-view{background:#1A1A1A!important;overflow:auto!important;height:auto!important}
+#remoteUI{font-family:'Segoe UI',sans-serif;color:#EEE;padding:10px}
+#rmNow{display:block;font-size:13px;font-weight:700;margin-bottom:8px;color:#9A9686}
+#rmNow.live{color:#E63946}
+.rm-btns{display:flex;gap:8px;margin-bottom:10px}
+.rm-btns button{flex:1;padding:14px 6px;font-size:15px;font-weight:700;border:0;border-radius:8px;background:#2A2A2A;color:#EEE;cursor:pointer}
+.rm-btns button:hover{background:#3A3A3A}
+.rm-btns .rm-go{background:#E9C46A;color:#1A1A1A}
+.rm-btns .rm-x{background:#7A2B2B}
+.rm-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:12px}
+.rm-item:hover{background:#262626}
+.rm-item.live{background:#4A1D22;outline:1px solid #E63946}
+.rm-item.child{margin-left:18px;opacity:.85}
+.rm-n{min-width:26px;font-weight:700;color:#E9C46A}
+.rm-th{width:44px;height:30px;object-fit:cover;border-radius:3px;background:#000}
+.rm-t{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+
 .tb-upd{font-size:10px;margin-left:8px;padding:2px 8px;border:1px solid #3A3A3A;border-radius:10px;background:transparent;color:#9A9686;cursor:pointer;-webkit-app-region:no-drag}
 .tb-upd:hover{color:#E9C46A;border-color:#B8860B}
 .tb-upd.ready{color:#1A1A1A;background:#E9C46A;border-color:#E9C46A;font-weight:700}
@@ -711,6 +740,11 @@ body.presenting .present-hud{display:block}
         <div class="ft-desc">Your elements float over your footage with a <b>real transparent background</b> — like a live transparent PNG, no chroma key, nothing to remove in edit. In OBS: <b>Sources → + → Browser</b>, paste the link below, set Width/Height to your canvas (e.g. 1920×1080). The overlay mirrors this window live — every move, zoom, and <kbd>F9</kbd> presentation step — while you keep the full app UI on your own screen. The audience never sees the app.<br>
         <button class="mb mb-s" style="margin-top:7px" onclick="copyObsLink()">📋 Copy OBS overlay link</button></div></div>
 
+      <div class="ft-item"><div class="ft-title">🎬 One-at-a-time cut-ins for OBS (like editing)</div>
+        <div class="ft-desc">Shows <b>one numbered asset at a time</b> on a transparent background, in serial order (1, 1.1, 2, 3…). In OBS add a <b>second Browser Source</b> with the cut-in link below. Then trigger it with <kbd>Ctrl+Alt+→</kbd> (next), <kbd>Ctrl+Alt+←</kbd> (previous), <kbd>Ctrl+Alt+↓</kbd> (hide) — these work even while OBS is focused — or add the <b>control dock</b> in OBS (<b>View → Docks → Custom Browser Docks</b>) for big Next/Prev/Hide buttons and a click-to-jump list. Videos and sounds play and auto-hide when finished. The next press after the last asset hides it. Options on the link: <code>&amp;fit=0.8</code> size, <code>&amp;anim=pop|fade|slide</code>, <code>&amp;autohide=0</code>. Anything can also call <code>/obs-cmd?a=next|prev|hide|goto&amp;n=3</code> (Stream Deck, etc.).<br>
+        <button class="mb mb-s" style="margin-top:7px" onclick="copyObsSoloLink()">📋 Copy cut-in link</button>
+        <button class="mb mb-s" style="margin-top:7px" onclick="copyObsDockLink()">📋 Copy control-dock link</button></div></div>
+
       <div class="ft-item"><div class="ft-title">▶ Presentation mode (F9)</div>
         <div class="ft-desc">The camera glides from element to element in <b>serial-number order</b> — narrate while you step with <kbd>←</kbd>/<kbd>→</kbd>. The current element gets a gold glow and a step counter shows at the bottom. Click a serial badge beforehand to change the order. Combine with <kbd>F10</kbd> for clean recorded walkthroughs.</div></div>
 
@@ -1142,12 +1176,15 @@ const BUILD_DATE  = '2026-07-04';
 const exportMode = new URLSearchParams(location.search).get('exportMode') === '1';
 const obsView = new URLSearchParams(location.search).has('obs');
 const notesView = new URLSearchParams(location.search).has('notes');
+const remoteView = new URLSearchParams(location.search).has('remote');
+const soloView = obsView && new URLSearchParams(location.search).get('mode') === 'solo';
 if (obsView) document.body.classList.add('obs-view');
 if (notesView) document.body.classList.add('notes-view');
 
 async function init(){
   if (exportMode) { setupExportMode(); return; }
   if (obsView)    { setupObsView();    return; }
+  if (remoteView) { setupRemoteView(); return; }
   if (notesView)  { setupNotesView();  return; }
   const params = new URLSearchParams(location.search);
   const f = params.get('file');
@@ -1173,6 +1210,7 @@ async function init(){
   startAutoSaveInterval();
   // Edits made in Presenter Notes' Edit mode arrive here over IPC (not the
   // one-way HTTP/SSE relay) and land exactly like a normal Commentary edit.
+  window.nabu.onShowCmd(showCmd);
   window.nabu.onNotesEdit(({ id, notes }) => {
     const el = elById(id); if (!el || (el.notes||'') === notes) return;
     pushHistory(); el.notes = notes; markDirty(); render(); obsPushBoard();
@@ -1184,15 +1222,22 @@ async function init(){
 // chrome, no interaction, no window.nabu. Mirrors the live board via SSE
 // pushed by the main window through the local server (/obs-state → /obs-events).
 let _obsFocusId = null;
+let _showIdx = -1, _liveId = null, _soloEl = null, _rmCur = null;  // cut-in state (declared early: render() reads _liveId)
 function setupObsView(){
   board = { title:'', elements:[], connectors:[] };
+  if (soloView){
+    document.body.classList.add('solo-view');
+    const l = document.createElement('div'); l.id = 'soloLayer'; document.body.appendChild(l);
+  }
   render(); applyVP();
   const es = new EventSource('/obs-events');
   es.onmessage = ev => {
     let m; try { m = JSON.parse(ev.data); } catch(e){ return; }
+    if (m.type === 'show'){ if (soloView) soloShow(m); return; }
     if (m.type === 'board'){
       board.elements = m.elements || [];
       board.connectors = m.connectors || [];
+      if (soloView) return;   // cut-in overlay never mirrors the board
       document.body.classList.toggle('no-serials', !!m.noSerials);
       render();
       applyObsFocus(_obsFocusId);
@@ -1375,6 +1420,8 @@ function obsPushPos(){ // element positions — ~20fps during drags
     obsSend({ type:'pos', items: board.elements.map(e => ({ id:e.id, x:e.x, y:e.y })) });
   }, 50);
 }
+function copyObsSoloLink(){ navigator.clipboard.writeText(location.origin + '/board.html?obs=1&mode=solo'); toast('Cut-in link copied ✓', true); }
+function copyObsDockLink(){ navigator.clipboard.writeText(location.origin + '/board.html?remote=1'); toast('Control-dock link copied ✓', true); }
 function copyObsLink(){
   navigator.clipboard.writeText(location.origin + '/board.html?obs=1');
   toast('OBS overlay link copied ✓', true);
@@ -1391,6 +1438,7 @@ function render(){
   updateGroupOutline();
   setTimeout(drawMinimap, 0);
   setTimeout(updateStats, 0);
+  if (_liveId) markLive();
   obsPushBoard();
 }
 
@@ -4327,6 +4375,110 @@ function setupUpdater(){
   });
 }
 setupUpdater();
+
+// -- One-at-a-time cut-in (like dropping a PNG/clip onto the timeline) -------------
+// Controller (main window): showCmd() steps through nvRundownItems() (1, 1.1, 2...)
+// and broadcasts {type:'show', id}. Triggered by global hotkeys (Ctrl+Alt+Left/Right/Down),
+// GET /obs-cmd?a=next|prev|hide|goto&n=3, or the ?remote=1 OBS dock.
+// Overlay (?obs=1&mode=solo, its own Browser Source): soloShow() renders ONLY that
+// element, centered + scaled to fit, on a transparent background. URL options:
+//   fit=0.8 (fraction of frame)  max=2.5 (max upscale)  anim=pop|fade|slide  autohide=0 (keep video up after it ends)
+function markLive(){
+  document.querySelectorAll('.el.live-cut').forEach(n => n.classList.remove('live-cut'));
+  if (_liveId){ const n = nodeOf(_liveId); if (n) n.classList.add('live-cut'); }
+}
+function showCmd(c){
+  if (!c) return;
+  const items = nvRundownItems();
+  if (!items.length){ toast('Nothing numbered to show yet — assets need serial numbers', true); return; }
+  let i = _showIdx;
+  if (c.a === 'next') i = (i + 1 >= items.length) ? -1 : i + 1;
+  else if (c.a === 'prev') i = i <= 0 ? 0 : i - 1;
+  else if (c.a === 'hide') i = -1;
+  else if (c.a === 'toggle') i = i >= 0 ? -1 : 0;
+  else if (c.a === 'goto'){
+    const k = items.findIndex(it => it.label === String(c.n));
+    if (k < 0){ toast('No asset numbered ' + c.n); return; }
+    i = k;
+  } else return;
+  _showIdx = i;
+  const it = items[i];
+  _liveId = it ? it.el.id : null;
+  markLive();
+  obsSend({ type:'show', id: _liveId, idx:i, total:items.length, label: it ? it.label : '' });
+  toast(it ? `🎬 LIVE ${it.label}  (${i+1}/${items.length})` : '🎬 Cut-in hidden');
+}
+function soloShow(m){
+  const P = new URLSearchParams(location.search);
+  const fit = parseFloat(P.get('fit')) || 0.8, maxS = parseFloat(P.get('max')) || 2.5, anim = P.get('anim') || 'pop';
+  const layer = document.getElementById('soloLayer');
+  if (_soloEl){
+    const old = _soloEl; _soloEl = null;
+    try { old.querySelectorAll('video,audio').forEach(v => v.pause()); } catch(e){}
+    if (old._pose) old._pose(false);
+    setTimeout(() => old.remove(), 500);
+  }
+  if (!m.id) return;
+  const el = elById(m.id); if (!el) return;
+  const wrap = document.createElement('div'); wrap.className = 'solo-wrap';
+  let media = null;
+  if (el.type === 'video'){ wrap.innerHTML = '<video playsinline></video>'; media = wrap.firstElementChild; media.src = toFileUrl(el.path); }
+  else {
+    wrap.innerHTML = elHtml(el);
+    if (el.type === 'sound'){ media = document.createElement('audio'); media.src = toFileUrl(el.path); wrap.appendChild(media); }
+  }
+  layer.appendChild(wrap); _soloEl = wrap;
+  let s = 1;
+  wrap._pose = on => {
+    const sc = on ? s : (anim === 'pop' ? s * 0.9 : s);
+    const ty = (!on && anim === 'slide') ? 'calc(-50% + 40px)' : '-50%';
+    wrap.style.transform = `translate(-50%,${ty}) scale(${sc})`;
+    wrap.style.opacity = on ? 1 : 0;
+  };
+  let shown = false;
+  const fitNow = () => {
+    const node = wrap.firstElementChild;
+    if (node.tagName === 'VIDEO' && node.videoWidth){ node.style.width = node.videoWidth + 'px'; node.style.height = node.videoHeight + 'px'; }
+    const w = node.offsetWidth, h = node.offsetHeight; if (!w || !h) return;
+    s = Math.min((innerWidth || 1920) * fit / w, (innerHeight || 1080) * fit / h, maxS);
+    if (!shown){ shown = true; wrap._pose(false); void wrap.offsetWidth; wrap._pose(true); }
+    else wrap._pose(true);
+  };
+  fitNow();
+  wrap.querySelectorAll('img').forEach(im => { if (!im.complete) im.addEventListener('load', fitNow); });
+  if (media){
+    media.addEventListener('loadedmetadata', fitNow);
+    media.play().catch(() => { media.muted = true; media.play().catch(()=>{}); });
+    if (P.get('autohide') !== '0') media.addEventListener('ended', () => { if (_soloEl === wrap) soloShow({ id: null }); });
+  }
+}
+// OBS control dock — add via OBS: View > Docks > Custom Browser Docks > URL .../board.html?remote=1
+function rmCmd(a, n){ try { fetch('/obs-cmd?a=' + a + (n != null ? '&n=' + encodeURIComponent(n) : '')); } catch(e){} }
+function rmRender(){
+  const items = nvRundownItems();
+  const cur = items.find(it => it.el.id === _rmCur);
+  const now = document.getElementById('rmNow');
+  now.textContent = cur ? '● LIVE ' + cur.label : 'Nothing on screen';
+  now.classList.toggle('live', !!cur);
+  const icon = { text:'📝', quote:'❝', sticky:'🗒', image:'🖼', video:'🎬', pdf:'📄', sound:'🎵', link:'🔗' };
+  document.getElementById('rmList').innerHTML = items.map(it => {
+    const th = it.el.type === 'image' && it.el.src ? `<img class="rm-th" src="${it.el.src}">` : `<span class="rm-th" style="display:flex;align-items:center;justify-content:center">${icon[it.el.type]||'•'}</span>`;
+    return `<div class="rm-item${it.el.id===_rmCur?' live':''}${it.child?' child':''}" onclick="rmCmd('goto','${it.label}')"><span class="rm-n">${it.label}</span>${th}<span class="rm-t">${esc(nvItemLabel(it.el)).slice(0,60)}</span></div>`;
+  }).join('');
+}
+function setupRemoteView(){
+  document.body.classList.add('remote-view');
+  board = { title:'', elements:[], connectors:[] };
+  const ui = document.createElement('div'); ui.id = 'remoteUI';
+  ui.innerHTML = `<span id="rmNow">Nothing on screen</span><div class="rm-btns"><button onclick="rmCmd('prev')">◀ Prev</button><button class="rm-go" onclick="rmCmd('next')">Next ▶</button><button class="rm-x" onclick="rmCmd('hide')">✕ Hide</button></div><div id="rmList"></div>`;
+  document.body.appendChild(ui);
+  const es = new EventSource('/obs-events');
+  es.onmessage = ev => {
+    let m; try { m = JSON.parse(ev.data); } catch(e){ return; }
+    if (m.type === 'board'){ board.elements = m.elements || []; rmRender(); }
+    else if (m.type === 'show'){ _rmCur = m.id; rmRender(); }
+  };
+}
 </script>
 </body>
 </html>

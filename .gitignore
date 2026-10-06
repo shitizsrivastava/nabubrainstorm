@@ -13,3 +13,4 @@ venv/
 .DS_Store
 Thumbs.db
 NabuBrainstorm-win32-x64/
+.claude/settings.local.json

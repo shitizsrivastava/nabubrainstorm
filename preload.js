@@ -50,6 +50,9 @@ contextBridge.exposeInMainWorld('nabu', {
   // App info
   getVersion: () => ipcRenderer.invoke('get-version'),
 
+  // OBS one-at-a-time cut-in commands (global hotkeys / HTTP / remote dock)
+  onShowCmd: (cb) => ipcRenderer.on('show-cmd', (_, c) => cb(c)),
+
   // Auto-update
   updateCheck:    () => ipcRenderer.invoke('update-check'),
   updateDownload: () => ipcRenderer.invoke('update-download'),

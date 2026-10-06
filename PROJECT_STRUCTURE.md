@@ -14,7 +14,7 @@ Current version: see `package.json` (`version`) and `APP_VERSION` in `board.html
 | `package.json` | App metadata, scripts, electron-builder (NSIS) + GitHub publish config |
 | `release.ps1` | Builds the installer and publishes a GitHub Release (what the Update button downloads) |
 | `deploy.ps1` | Legacy dev loop: copy sources into the old `NabuBrainstorm-win32-x64` build + repack asar |
-| `assets/icon.png` | App/installer icon (512×512 PNG, optional; electron-builder picks it up) |
+| `assets/icon.png` | App logo / installer icon (1254×1254 PNG; also used in the README and window icon) |
 | `CLAUDE.md` | Deep implementation notes for AI-assisted work (gotchas, design decisions) |
 | `.claude/obs-test-server.js` | Static test server for previewing board.html in a browser |
 | `dist/` (git-ignored) | electron-builder output: `NabuBrainstorm Setup x.y.z.exe`, `latest.yml`, blockmap |
@@ -32,7 +32,7 @@ Current version: see `package.json` (`version`) and `APP_VERSION` in `board.html
 - `contextIsolation: true`, `nodeIntegration: false`, `webSecurity: false` (local media), `webviewTag: true` (social embeds).
 - Board is served from a local HTTP origin (not `file://`) so embeds get a valid referrer and OBS CEF can load it.
 - Ports 41414→41419 are tried first so the OBS URL survives restarts; falls back to a random port.
-- Same `board.html` runs in 4 modes via query string: normal, `?obs=1` (read-only overlay), `?notes=1` (presenter notes), `?exportMode=1` (hidden export window).
+- Same `board.html` runs in 6 modes via query string: normal, `?obs=1` (read-only mirror overlay), `?obs=1&mode=solo` (one-at-a-time cut-ins), `?remote=1` (OBS control dock), `?notes=1` (presenter notes), `?exportMode=1` (hidden export window).
 
 ## Data model (saved as `.brb` JSON)
 ```js
@@ -72,9 +72,16 @@ Always guard `board.connectors || []` — old saves lack it.
 - Media: readImageFile, pickImageFolder, pickAssetFile, openFile, openExternal
 - Export: exportPng, exportPngAdvanced (+ internal webp/stitch channels); fetchEmbedData; getVersion
 - Notes: openNotesWindow, sendNotesEdit, onNotesEdit
+- OBS cut-ins: onShowCmd (hotkeys / `/obs-cmd` → renderer)
 - **Update**: updateCheck, updateDownload, updateInstall, onUpdateStatus
 
 ## OBS integration
+0. **One-at-a-time cut-ins** (`?obs=1&mode=solo`): a second Browser Source that shows ONE numbered asset, centered and scaled to fit,
+   transparent background, with pop/fade/slide animation. Controller = main window `showCmd()` (steps `nvRundownItems()`: 1, 1.1, 2…),
+   broadcasting `{type:'show',id}` over the SSE relay; overlay = `soloShow()`. Triggers: global hotkeys Ctrl+Alt+Right/Left/Down
+   (`globalShortcut` in main.js, work while OBS is focused), `GET /obs-cmd?a=next|prev|hide|goto&n=3`, or the control dock
+   `?remote=1` (OBS → View → Docks → Custom Browser Docks; big buttons + click-to-jump list). Video/sound auto-play, auto-hide on end.
+   Link options: `fit`, `max`, `anim`, `autohide`. Main window marks the live asset with a red `● LIVE` tag.
 1. **Overlay (recommended)**: OBS → Sources → Browser → `http://127.0.0.1:41414/board.html?obs=1`, 1920×1080. Real alpha, mirrors viewport/moves/F9 steps live; viewers never see the app UI.
 2. **Window capture + F10** capture mode (opaque background).
 3. **Presenter Notes** is a separate OS window, so it is never captured.
@@ -92,11 +99,11 @@ The folder name contains `&`, which breaks the `npx` shim on Windows — call `n
 
 Release flow: bump `version` in `package.json` + `APP_VERSION` in `board.html` → commit/push → `.\release.ps1` → installed apps show "Update to vX" on the next check (or when you click **⟳ Update**).
 
-The installer is unsigned, so Windows SmartScreen shows "More info → Run anyway" once. The GitHub repo must be **public** (or releases hosted in a public repo) for the updater to read releases without a token.
+The installer is unsigned, so Windows SmartScreen shows "More info → Run anyway" once. The GitHub repo is public so the updater can read releases without a token.
 
 ## Known risks / improvement backlog
 - `/media?p=` streams any local file path to anything that can reach 127.0.0.1 → restrict to paths referenced by the board and check `Host`/`Origin`.
-- `/obs-state` POST accepts any caller; add a per-session token.
+- `/obs-state` POST and `/obs-cmd` accept any local caller; add a per-session token.
 - `webSecurity:false` + `webviewTag:true` widen the attack surface; scope to embed webviews only.
 - Images are base64 inside `.brb` → large files; consider an external asset folder.
 - No code signing, no automated tests.

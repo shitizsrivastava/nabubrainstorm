@@ -14,7 +14,7 @@
     "appId": "com.shitiz.nabubrainstorm",
     "productName": "NabuBrainstorm",
     "directories": { "output": "dist", "buildResources": "assets" },
-    "files": ["board.html", "main.js", "preload.js", "package.json"],
+    "files": ["board.html", "main.js", "preload.js", "package.json", "assets/icon.png"],
     "win": { "target": "nsis" },
     "nsis": {
       "oneClick": true,

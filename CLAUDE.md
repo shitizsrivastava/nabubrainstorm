@@ -11,8 +11,8 @@ The app is a real installed app now (electron-builder NSIS, Electron 44). Full r
   (builds + `gh release create`). Installed apps check GitHub Releases via electron-updater on launch and via the titlebar
   **⟳ Update** button (`#updBtn`; `updateClick()`/`setupUpdater()` at end of board.html; "Auto-update" section of main.js;
   `window.nabu.update*`). Flow: Check → "Update to vX" → download % → "Restart to update". Unpackaged dev only toasts.
-- Repo `shitizsrivastava/nabubrainstorm` is PRIVATE → updater can't read releases until it is public (or releases move to a
-  public repo; edit `build.publish` in package.json).
+- Repo `shitizsrivastava/nabubrainstorm` is PUBLIC (made public Oct 2026) so the updater can read releases without a token;
+  if it ever goes private again the updater breaks (move releases to a public repo via `build.publish` in package.json).
 - userData is pinned to `%APPDATA%\nabu-brainstorm` in main.js so config survives; never add a top-level `productName`.
 - Optional icon: `assets/icon.png` (512×512) is used for the exe/installer if present.
 - Installer builds don't stamp `__BUILD_DATE__` (only deploy.ps1 does); the badge then shows just the version.
@@ -379,6 +379,12 @@ needed, stays portable in the JSON save file.
 | `Right-click` element | Context menu |
 | `F10` | Capture mode — hides all UI chrome (`body.capture-mode`) for OBS window capture |
 | `F9` | Presentation step mode — glides camera between top-level elements in serial order (`←`/`→`/`PgUp`/`PgDn` step, `Esc` exits, HUD shows `n / total`) |
+
+## One-at-a-time OBS cut-ins (`?obs=1&mode=solo`) + control dock (`?remote=1`)
+Added v1.11.0. Full description in PROJECT_STRUCTURE.md ("OBS integration" item 0). Code: board.html end of file
+(`showCmd`, `soloShow`, `setupRemoteView`, `rmRender`), main.js (`/obs-cmd` route, `sendShowCmd`, `registerShowHotkeys`),
+preload `onShowCmd`. `soloShow` renders via `elHtml()` into `#soloLayer` (not the canvas — solo overlay skips `render()` of the board)
+except video/sound which use real `<video>/<audio>` at natural size. Rundown order = `nvRundownItems()`.
 
 ## OBS transparent overlay (`?obs=1`)
 Real-alpha live overlay for OBS Browser Sources — the user's "live transparent PNG".
