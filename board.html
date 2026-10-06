@@ -12,6 +12,9 @@ body{font-family:'Segoe UI',sans-serif;height:100vh;display:flex;flex-direction:
 .tb-logo{color:#B8860B;font-size:13px;font-weight:700;letter-spacing:0.12em}
 .tb-ver{font-size:9px;color:#6E6A5E;font-family:monospace;letter-spacing:.03em;cursor:default;-webkit-app-region:no-drag}
 .tb-ver:hover{color:#B8860B}
+.tb-upd{font-size:10px;margin-left:8px;padding:2px 8px;border:1px solid #3A3A3A;border-radius:10px;background:transparent;color:#9A9686;cursor:pointer;-webkit-app-region:no-drag}
+.tb-upd:hover{color:#E9C46A;border-color:#B8860B}
+.tb-upd.ready{color:#1A1A1A;background:#E9C46A;border-color:#E9C46A;font-weight:700}
 .tb-title{-webkit-app-region:no-drag;background:#262626;border:1px solid #333;color:#EEE;font-size:12px;padding:4px 10px;border-radius:5px;outline:none;width:220px}
 .tb-title:focus{border-color:#B8860B}
 .tb-btn{-webkit-app-region:no-drag;background:#262626;border:1px solid #333;color:#CCC;font-size:11px;padding:4px 11px;border-radius:5px;cursor:pointer}
@@ -536,6 +539,7 @@ body.presenting .present-hud{display:block}
 <div class="tb">
   <span class="tb-logo">𒀭 BOARD</span>
   <span class="tb-ver" id="verBadge" title="Version & last update"></span>
+  <button class="tb-upd" id="updBtn" onclick="updateClick()" title="Check for updates">⟳ Update</button>
   <input class="tb-title" id="boardTitle" placeholder="Board title" oninput="onTitle()">
   <button class="tb-btn" onclick="newBoard()">New</button>
   <button class="tb-btn" onclick="openBoard()">Open…</button>
@@ -1124,7 +1128,7 @@ function detachAsset(id){
 // ── Version / build stamp ─────────────────────────────────────
 // APP_VERSION is bumped by hand; BUILD_DATE is auto-stamped by deploy.ps1
 // (it replaces the 2026-07-04 token in the deployed copy each deploy).
-const APP_VERSION = '1.10.0';
+const APP_VERSION = '1.11.0';
 const BUILD_DATE  = '2026-07-04';
 (function stampVersion(){
   const dated = /^\d{4}-\d{2}-\d{2}/.test(BUILD_DATE);
@@ -4299,6 +4303,30 @@ function renumberEl(id, newNum){
 }
 
 init();
+
+// ── Auto-update button ────────────────────────────────────────────────────────
+let _updState='idle';
+function updateClick(){
+  if(!window.nabu||!window.nabu.updateCheck) return;
+  if(_updState==='available') return window.nabu.updateDownload();
+  if(_updState==='ready') return window.nabu.updateInstall();
+  if(_updState==='checking'||_updState==='downloading') return;
+  window.nabu.updateCheck();
+}
+function setupUpdater(){
+  if(!window.nabu||!window.nabu.onUpdateStatus) return;
+  const btn=document.getElementById('updBtn'); if(!btn) return;
+  window.nabu.onUpdateStatus(s=>{
+    _updState=s.state; btn.classList.toggle('ready',s.state==='ready'||s.state==='available');
+    const m={checking:['⟳ Checking…',''],none:['✓ Up to date','You have the latest version.'],
+      available:['⬇ Update to v'+s.version,'New version found — click to download.'],
+      downloading:['⬇ '+s.percent+'%',''],ready:['↻ Restart to update','Downloaded — click to restart and install.'],
+      dev:['⟳ Update','Updates only work in the installed app.'],error:['⚠ Retry update',s.message||'Update check failed.']}[s.state];
+    if(m){ btn.textContent=m[0]; if(m[1]) toast(m[1]); }
+    if(s.state==='none'||s.state==='dev'||s.state==='error') setTimeout(()=>{ if(_updState===s.state){ btn.textContent='⟳ Update'; btn.classList.remove('ready'); } },4000);
+  });
+}
+setupUpdater();
 </script>
 </body>
 </html>

@@ -50,6 +50,12 @@ contextBridge.exposeInMainWorld('nabu', {
   // App info
   getVersion: () => ipcRenderer.invoke('get-version'),
 
+  // Auto-update
+  updateCheck:    () => ipcRenderer.invoke('update-check'),
+  updateDownload: () => ipcRenderer.invoke('update-download'),
+  updateInstall:  () => ipcRenderer.send('update-install'),
+  onUpdateStatus: (cb) => ipcRenderer.on('update-status', (_, s) => cb(s)),
+
   // Presenter notes window
   openNotesWindow: () => ipcRenderer.invoke('open-notes-window'),
   sendNotesEdit:   (payload) => ipcRenderer.send('notes-edit', payload),

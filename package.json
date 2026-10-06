@@ -1,8 +1,34 @@
 {
   "name": "nabu-brainstorm",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "description": "NabuBrainstorm – standalone visual brainstorm board",
   "main": "main.js",
-  "author": "",
-  "license": "MIT"
+  "author": "Shitiz Srivastava",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis --publish never",
+    "release": "powershell -ExecutionPolicy Bypass -File release.ps1"
+  },
+  "build": {
+    "appId": "com.shitiz.nabubrainstorm",
+    "productName": "NabuBrainstorm",
+    "directories": { "output": "dist", "buildResources": "assets" },
+    "files": ["board.html", "main.js", "preload.js", "package.json"],
+    "win": { "target": "nsis" },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "deleteAppDataOnUninstall": false,
+      "shortcutName": "NabuBrainstorm"
+    },
+    "publish": { "provider": "github", "owner": "shitizsrivastava", "repo": "nabubrainstorm" }
+  },
+  "devDependencies": {
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  }
 }

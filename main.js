@@ -4,6 +4,9 @@ const fs   = require('fs');
 const https = require('https');
 const http  = require('http');
 
+// Keep the existing userData folder (config + last-opened file) stable across installer builds
+app.setPath('userData', path.join(app.getPath('appData'), 'nabu-brainstorm'));
+
 // ── HTTP GET helper (follows one redirect) ────────────────────────────────────
 function httpGet(url, redirects = 3) {
   return new Promise((resolve, reject) => {
@@ -577,3 +580,36 @@ ipcMain.handle('fetch-embed-data', async (_, { url, embedType }) => {
 
 // ── App info ──────────────────────────────────────────────────────────────────
 ipcMain.handle('get-version', () => app.getVersion());
+
+// ── Auto-update (GitHub Releases via electron-updater) ───────────────────────
+// Only active in the installed build; `npm start` (unpackaged) reports "dev".
+let autoUpdater = null;
+function sendUpdate(state, extra = {}){
+  if (win && !win.isDestroyed()) win.webContents.send('update-status', { state, ...extra });
+}
+function initUpdater(){
+  if (!app.isPackaged || autoUpdater) return;
+  try {
+    autoUpdater = require('electron-updater').autoUpdater;
+    autoUpdater.autoDownload = false;
+    autoUpdater.on('checking-for-update', () => sendUpdate('checking'));
+    autoUpdater.on('update-available',    i => sendUpdate('available', { version: i.version }));
+    autoUpdater.on('update-not-available',() => sendUpdate('none'));
+    autoUpdater.on('download-progress',   p => sendUpdate('downloading', { percent: Math.round(p.percent) }));
+    autoUpdater.on('update-downloaded',   i => sendUpdate('ready', { version: i.version }));
+    autoUpdater.on('error',               e => sendUpdate('error', { message: String(e && e.message || e).slice(0, 200) }));
+  } catch(e){ autoUpdater = null; }
+}
+ipcMain.handle('update-check', async () => {
+  initUpdater();
+  if (!autoUpdater) { sendUpdate('dev'); return { success: false, dev: true }; }
+  try { await autoUpdater.checkForUpdates(); return { success: true }; }
+  catch(e){ sendUpdate('error', { message: String(e.message || e).slice(0, 200) }); return { success: false }; }
+});
+ipcMain.handle('update-download', async () => {
+  if (!autoUpdater) return { success: false };
+  try { await autoUpdater.downloadUpdate(); return { success: true }; }
+  catch(e){ sendUpdate('error', { message: String(e.message || e).slice(0, 200) }); return { success: false }; }
+});
+ipcMain.on('update-install', () => { if (autoUpdater) autoUpdater.quitAndInstall(); });
+app.whenReady().then(() => setTimeout(() => { initUpdater(); if (autoUpdater) autoUpdater.checkForUpdates().catch(()=>{}); }, 5000));

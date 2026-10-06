@@ -3,9 +3,23 @@
 ## What this app is
 Electron 29 desktop app: a visual brainstorm board where you place text, images, PDFs, videos, sound, sticky notes, quotes, and links on a canvas, connect them with bezier wires, annotate images, and export PNG.
 
-## Deploy pipeline (ALWAYS use this)
+## Build / install / update (CURRENT — use this)
+The app is a real installed app now (electron-builder NSIS, Electron 44). Full reference: PROJECT_STRUCTURE.md.
+- Run from source: `npm start`. Build installer: `node node_modules/electron-builder/cli.js --win nsis --publish never`
+  (NOT `npx` — the `&` in the folder path "05 Apps & Code" breaks the shim). Output: `dist\NabuBrainstorm Setup x.y.z.exe`.
+- **Release flow**: bump `version` in package.json AND `APP_VERSION` in board.html → commit/push → `.\release.ps1`
+  (builds + `gh release create`). Installed apps check GitHub Releases via electron-updater on launch and via the titlebar
+  **⟳ Update** button (`#updBtn`; `updateClick()`/`setupUpdater()` at end of board.html; "Auto-update" section of main.js;
+  `window.nabu.update*`). Flow: Check → "Update to vX" → download % → "Restart to update". Unpackaged dev only toasts.
+- Repo `shitizsrivastava/nabubrainstorm` is PRIVATE → updater can't read releases until it is public (or releases move to a
+  public repo; edit `build.publish` in package.json).
+- userData is pinned to `%APPDATA%\nabu-brainstorm` in main.js so config survives; never add a top-level `productName`.
+- Optional icon: `assets/icon.png` (512×512) is used for the exe/installer if present.
+- Installer builds don't stamp `__BUILD_DATE__` (only deploy.ps1 does); the badge then shows just the version.
+
+## Legacy deploy pipeline (old hand-packed build)
 ```powershell
-& "C:\Users\pc\Desktop\MY apps\NabuBrainstorm\deploy.ps1"
+& ".\deploy.ps1"
 ```
 Stops the running app, copies source files into the Electron build, repacks `app.asar`, relaunches.
 **Both** copy and repack are required — this Electron build loads `app.asar` with priority over the `app/` folder.
