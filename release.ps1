@@ -10,6 +10,10 @@ $bh = [regex]::Replace($bh, "const BUILD_DATE  = '[^']*';", "const BUILD_DATE  =
 [System.IO.File]::WriteAllText("$PSScriptRoot\board.html", $bh, (New-Object System.Text.UTF8Encoding($false)))
 Write-Host "Building NabuBrainstorm v$ver ..."
 node node_modules/electron-builder/cli.js --win nsis --publish never
-$files = @("dist\NabuBrainstorm Setup $ver.exe", "dist\NabuBrainstorm Setup $ver.exe.blockmap", "dist\latest.yml")
+# GitHub renames files containing spaces, so upload hyphenated copies that match latest.yml
+$exe = "dist\NabuBrainstorm-Setup-$ver.exe"
+Copy-Item "dist\NabuBrainstorm Setup $ver.exe" $exe -Force
+Copy-Item "dist\NabuBrainstorm Setup $ver.exe.blockmap" "$exe.blockmap" -Force
+$files = @($exe, "$exe.blockmap", "dist\latest.yml")
 gh release create "v$ver" $files --title "NabuBrainstorm v$ver" --notes "NabuBrainstorm v$ver"
 Write-Host "Published v$ver. Installed apps will offer it via the Update button."
