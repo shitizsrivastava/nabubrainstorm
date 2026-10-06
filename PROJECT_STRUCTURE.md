@@ -12,6 +12,8 @@ Current version: see `package.json` (`version`) and `APP_VERSION` in `board.html
 | `main.js` | Electron main process: windows, local HTTP server, OBS relay, IPC, saves, export, auto-updater |
 | `preload.js` | `contextBridge` → `window.nabu.*` API (the only renderer↔main surface) |
 | `package.json` | App metadata, scripts, electron-builder (NSIS) + GitHub publish config |
+| `update-local.ps1` | Builds the installer and copies it to the Updates folder (⟳ Update installs it) |
+| `GUIDE.md` | Printable step-by-step guide (also in-app: Help → OBS Guide) |
 | `release.ps1` | Builds the installer and publishes a GitHub Release (what the Update button downloads) |
 | `deploy.ps1` | Legacy dev loop: copy sources into the old `NabuBrainstorm-win32-x64` build + repack asar |
 | `assets/icon.png` | App logo / installer icon (1254×1254 PNG; also used in the README and window icon) |
@@ -101,9 +103,27 @@ Release flow: bump `version` in `package.json` + `APP_VERSION` in `board.html` �
 
 The installer is unsigned, so Windows SmartScreen shows "More info → Run anyway" once. The GitHub repo is public so the updater can read releases without a token.
 
+## v1.12 additions
+- **Security**: `getToken()` (persistent random key in nabu-config.json) guards `/obs-events`, `/obs-state`, `/obs-cmd`, `/media`;
+  `hostOk()`/`originOk()` block DNS-rebinding and cross-site calls; `/media` serves media extensions only, with Range support.
+  The renderer appends `kq()` (the `k=` param) to every fetch / EventSource / media URL.
+- **External image assets**: `externalize()` / `internalize()` / `pruneAssets()` in main.js — `el.src` data URLs become
+  `asset:<sha1>.<ext>` files in `<save folder>\Assets`; *Save As* keeps images embedded.
+- **OBS WebSocket v5 client** (main.js, global `WebSocket`): `obsConnect` / `obsRequest`, allow-list `OBS_ALLOWED`, password
+  encrypted with `safeStorage`. Renderer: `obsSt`, `obsActions()` (scene switch, chapter marker), `openObsPanel()`.
+- **Hotkeys**: `DEFAULT_HOTKEYS`, `registerShowHotkeys()`, IPC `get-hotkeys` / `set-hotkeys`.
+- **Cut-in data**: `el.cut = {pos, anim, fit, dur, auto, sfx, scene, chapter}`; `cutLog`, `buildTimeline()`, `buildChapters()`,
+  `edlText()`, `csvText()`.
+- **Views** (query string): `?prompter=1` teleprompter, plus `?obs=1`, `?obs=1&mode=solo`, `?remote=1`, `?notes=1`.
+- **Frames**: element `type:'frame'` (no serial, rendered first, click-through body); `exportFrame()` → `export-png-advanced` with `format:'jpg'`.
+- **Laser**: `laser` SSE message (canvas coords) → `laserApply()` on the mirror overlay.
+- **Updates**: Updates folder (`Documents\NabuBrainstorm\Updates`, `findLocalUpdate()`) is checked before GitHub (`electron-updater`);
+  a local install spawns the installer with `--updated /S --force-run` after the app quits.
+- Scripts: `release.ps1` (GitHub release), `update-local.ps1` (build → Updates folder).
+- Docs: `GUIDE.md` (step-by-step), in-app Help → 🎬 OBS Guide.
+
 ## Known risks / improvement backlog
-- `/media?p=` streams any local file path to anything that can reach 127.0.0.1 → restrict to paths referenced by the board and check `Host`/`Origin`.
-- `/obs-state` POST and `/obs-cmd` accept any local caller; add a per-session token.
+- The link key is long-lived (stored in config); rotate it if a link leaks.
 - `webSecurity:false` + `webviewTag:true` widen the attack surface; scope to embed webviews only.
-- Images are base64 inside `.brb` → large files; consider an external asset folder.
+- Boards saved with external images depend on the Assets folder (use Save As… for a single portable file).
 - No code signing, no automated tests.

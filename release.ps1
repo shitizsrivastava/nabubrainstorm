@@ -4,8 +4,12 @@
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
 $ver = (Get-Content package.json -Raw | ConvertFrom-Json).version
+# Stamp today's date into the "updated" label in board.html (commit this change afterwards)
+$bh = Get-Content board.html -Raw -Encoding UTF8
+$bh = [regex]::Replace($bh, "const BUILD_DATE  = '[^']*';", "const BUILD_DATE  = '$(Get-Date -Format yyyy-MM-dd)';")
+[System.IO.File]::WriteAllText("$PSScriptRoot\board.html", $bh, (New-Object System.Text.UTF8Encoding($false)))
 Write-Host "Building NabuBrainstorm v$ver ..."
-npx electron-builder --win nsis --publish never
+node node_modules/electron-builder/cli.js --win nsis --publish never
 $files = @("dist\NabuBrainstorm Setup $ver.exe", "dist\NabuBrainstorm Setup $ver.exe.blockmap", "dist\latest.yml")
 gh release create "v$ver" $files --title "NabuBrainstorm v$ver" --notes "NabuBrainstorm v$ver"
 Write-Host "Published v$ver. Installed apps will offer it via the Update button."

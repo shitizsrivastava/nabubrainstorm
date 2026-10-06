@@ -380,6 +380,15 @@ needed, stays portable in the JSON save file.
 | `F10` | Capture mode — hides all UI chrome (`body.capture-mode`) for OBS window capture |
 | `F9` | Presentation step mode — glides camera between top-level elements in serial order (`←`/`→`/`PgUp`/`PgDn` step, `Esc` exits, HUD shows `n / total`) |
 
+## v1.12 features (map in PROJECT_STRUCTURE.md "v1.12 additions")
+Token-guarded server (`k=` on every URL — use `kq()`), external image assets (`asset:<sha1>`), OBS WebSocket client, per-asset
+`el.cut`, session log / chapters / EDL, teleprompter (`?prompter=1`), frames (`type:'frame'`, excluded from serials), laser, Updates folder.
+**Gotchas**: `let` state read by `render()` must be declared near `_obsFocusId` (TDZ — `init()` runs before late declarations);
+background browser tabs throttle `requestAnimationFrame` (don't gate visuals on it); the toolbar scrolls horizontally;
+`--dir` builds have no `app-update.yml` (online updates only work from the NSIS installer build);
+test the real app via `--remote-debugging-port=9333` + a CDP script instead of guessing.
+If the NSIS build fails (makensis error) right after a --dir build, delete dist/*Setup* and rerun.
+
 ## One-at-a-time OBS cut-ins (`?obs=1&mode=solo`) + control dock (`?remote=1`)
 Added v1.11.0. Full description in PROJECT_STRUCTURE.md ("OBS integration" item 0). Code: board.html end of file
 (`showCmd`, `soloShow`, `setupRemoteView`, `rmRender`), main.js (`/obs-cmd` route, `sendShowCmd`, `registerShowHotkeys`),

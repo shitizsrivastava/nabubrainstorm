@@ -2,6 +2,26 @@
 
 All notable changes to NabuBrainstorm. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.12.0] — 2026-10-07
+### Added
+- **📡 OBS panel**: copy overlay links, connect to OBS WebSocket (scene switching per asset, start/stop recording,
+  chapter markers at every cut-in, auto-return to previous scene), rebindable global hotkeys.
+- **Per-asset cut-in settings** (position, animation, size, target seconds, auto-hide, OBS scene, sound effect, chapter title).
+- **Live timer**: ● LIVE pill in the app, in the control dock and in the teleprompter; turns red over target.
+- **📜 Teleprompter** window (commentary of the live asset, next-up line, size, mirror, auto-scroll).
+- **🎞 Session timeline**: recorded or planned; copy YouTube chapters, export EDL (Premiere/Resolve) and CSV.
+- **🖼 Thumbnail frames**: 16:9 frames, export 1280×720 JPG/PNG, duplicate as A/B variant, A/B template.
+- **🔴 Laser pointer** with click pings on the Mirror overlay.
+- **Help → 🎬 OBS Guide** with a START HERE step-by-step walkthrough, plus `GUIDE.md`.
+- **Updates folder** (`Documents\NabuBrainstorm\Updates`): drop a newer installer in and ⟳ Update installs it; friendlier
+  update errors; `update-local.ps1`.
+### Changed
+- **Smaller boards**: images are saved once in `Documents\NabuBrainstorm\Assets` (content-addressed) instead of inside every
+  save; *Save As…* still embeds them.
+- **Security**: OBS/control/media routes require a private session key (`k=` in your links), Host/Origin checks, `/media`
+  limited to media file types, Range support. **Re-copy your OBS links from 📡 OBS after updating.**
+- Image exporter supports JPG.
+
 ## [1.11.0] — 2026-10-07
 ### Added
 - Windows installer (electron-builder, NSIS) — installs per-user with Start Menu / desktop shortcuts.

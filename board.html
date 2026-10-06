@@ -12,6 +12,59 @@ body{font-family:'Segoe UI',sans-serif;height:100vh;display:flex;flex-direction:
 .tb-logo{color:#B8860B;font-size:13px;font-weight:700;letter-spacing:0.12em}
 .tb-ver{font-size:9px;color:#6E6A5E;font-family:monospace;letter-spacing:.03em;cursor:default;-webkit-app-region:no-drag}
 .tb-ver:hover{color:#B8860B}
+/* ── v1.12: cut-in settings, session, OBS panel, prompter, frames, laser, guide ── */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;padding:14px 18px}
+.fg label,.fg2 label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:#9A9686}
+.fg input,.fg select,.fg2 input{background:#141414;border:1px solid #333;border-radius:5px;color:#E9E7DF;font-size:12.5px;padding:7px 8px;outline:none;font-family:inherit}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin:6px 0}
+.fg2.hk input{font-family:monospace;cursor:pointer}.fg2.hk input.bad{border-color:#E63946;color:#E63946}
+.obs-pane h4{margin:14px 0 6px;font-size:12px;color:#E9C46A;letter-spacing:.02em}.obs-pane h4:first-child{margin-top:0}.obs-pane h4 span{color:#777;font-weight:400}
+.lk{display:grid;grid-template-columns:120px 1fr auto;align-items:center;gap:8px;margin:5px 0;font-size:11.5px;color:#BBB}.lk b{display:block;color:#DDD}.lk small{display:block;color:#777;font-size:10px}
+.lk code{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#141414;border:1px solid #2A2A2A;border-radius:4px;padding:5px 7px;font-size:10.5px;color:#9A9686}
+.lk .mb{padding:4px 10px;font-size:11px}
+.obs-status{font-size:12px;color:#BBB;margin:2px 0 8px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#666;margin-right:4px}.dot.ok{background:#2ECC71}
+.chk{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:#BBB;margin:6px 0}.chk label{display:flex;flex-direction:row;gap:7px;align-items:center}.chk input{width:auto;flex:none;margin:0}
+.tool.live{background:#4A1D22;color:#fff;box-shadow:inset 0 0 0 1px #E63946}
+.seg{background:#262626;border:1px solid #333;color:#BBB;padding:5px 14px;border-radius:14px;cursor:pointer;font-size:12px}.seg.on{background:#B8860B;color:#fff;border-color:#B8860B}
+.sess-t{width:100%;border-collapse:collapse;font-size:12px}.sess-t th{position:sticky;top:0;background:#1C1C1C;text-align:left;color:#9A9686;font-weight:600;padding:6px 8px;border-bottom:1px solid #333}
+.sess-t td{padding:5px 8px;border-bottom:1px solid #262626;color:#CCC}.sess-t td.n{color:#E9C46A;font-weight:700}.sess-t tr.child td{opacity:.8}.sess-t td.over{color:#E63946;font-weight:700}
+.cut-hud{display:none;position:fixed;left:14px;bottom:14px;z-index:9000;background:#1A1A1A;color:#fff;border:1px solid #E63946;border-radius:16px;padding:6px 14px;font:700 12px 'Segoe UI',sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+.cut-hud.show{display:block}.cut-hud.over{background:#7A1D26}
+body.capture-mode .cut-hud,body.obs-view .cut-hud{display:none!important}
+/* prompter */
+body.prompter-view>*:not(#prompterUI){display:none!important}
+body.prompter-view{background:#000!important;overflow:hidden!important}
+#prompterUI{position:fixed;inset:0;display:flex;flex-direction:column;font-family:'Segoe UI',Arial,sans-serif;color:#fff}
+#pmBar{display:flex;align-items:center;gap:10px;padding:8px 14px;background:#111;font-size:13px;flex:none}
+#pmBar button{background:#262626;border:1px solid #444;color:#ddd;border-radius:5px;padding:3px 10px;cursor:pointer;font-size:13px}
+#pmBar input[type=range]{width:90px;vertical-align:middle}.pm-sp{flex:1}#pmTimer{color:#E9C46A;font-variant-numeric:tabular-nums}#pmTimer.over{color:#E63946;font-weight:700}
+#pmBody{flex:1;overflow-y:auto;padding:5vh 7vw;scroll-behavior:auto}
+#pmText{white-space:pre-wrap;line-height:1.45;font-weight:600;font-size:44px}
+#pmNext{flex:none;padding:8px 14px;background:#111;color:#8A8570;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* thumbnail frames */
+.el-frame{pointer-events:none;border:2px dashed #E9C46A;box-sizing:border-box;z-index:0}
+.el-frame .frame-tag{position:absolute;left:-2px;top:-24px;background:#E9C46A;color:#1A1A1A;font:700 11px 'Segoe UI',sans-serif;padding:3px 9px;border-radius:5px 5px 0 0;cursor:grab;pointer-events:auto;white-space:nowrap}
+.el-frame .rz{pointer-events:auto}
+body.exporting .el-frame{display:none}
+/* laser */
+#laserDot{display:none;position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:radial-gradient(circle,#fff 0,#ff3b3b 40%,rgba(255,59,59,0) 72%);box-shadow:0 0 14px 6px rgba(255,59,59,.55);pointer-events:none;z-index:50}
+.laser-ping{position:absolute;width:20px;height:20px;margin:-10px 0 0 -10px;border:3px solid #ff3b3b;border-radius:50%;pointer-events:none;z-index:50;animation:lping .7s ease-out forwards}
+@keyframes lping{to{transform:scale(4);opacity:0}}
+body.laser-on #viewport{cursor:crosshair}
+/* OBS guide */
+.gd{overflow-y:auto;padding:16px 22px 24px;font-size:12.5px;line-height:1.65;color:#C9C6BA;display:none}
+.gd h3{font-size:13.5px;color:#E9C46A;margin:0}.gd .lead{font-size:13px;color:#DDD;margin:2px 0 12px}
+.gd details{border:1px solid #2E2E2E;border-radius:8px;margin:8px 0;background:#181818}.gd summary{cursor:pointer;padding:10px 14px;font-weight:700;color:#E9E7DF;font-size:13px}.gd details[open] summary{border-bottom:1px solid #2A2A2A}
+.gd .sec{padding:8px 16px 12px}
+.gd .st{display:flex;gap:10px;margin:9px 0}.gd .nm{flex:none;width:22px;height:22px;border-radius:50%;background:#B8860B;color:#fff;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.gd .tip{background:#221E10;border-left:3px solid #E9C46A;padding:7px 12px;margin:9px 0;border-radius:4px}.gd .warn{background:#2A1416;border-left:3px solid #E63946;padding:7px 12px;margin:9px 0;border-radius:4px}
+.gd code{background:#101010;border:1px solid #2A2A2A;border-radius:4px;padding:1px 5px;font-size:11.5px;color:#E9C46A;word-break:break-all}
+.gd .linkrow{display:flex;gap:8px;align-items:center;margin:6px 0 2px}.gd .linkrow code{flex:1;min-width:0;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gd table{border-collapse:collapse;width:100%;margin:8px 0;font-size:12px}.gd td,.gd th{border:1px solid #2A2A2A;padding:5px 9px;text-align:left;vertical-align:top}.gd th{background:#1F1F1F;color:#E9C46A}
+.gd kbd{background:#2A2A2A;border:1px solid #444;border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:11px;color:#EEE}
+.gd .qa b{color:#E9E7DF}.gd .qa{margin:8px 0}
+
 /* -- One-at-a-time cut-in overlay (?obs=1&mode=solo) -- */
 body.solo-view .canvas{display:none!important}
 #soloLayer{position:fixed;inset:0;pointer-events:none;overflow:hidden}
@@ -55,8 +108,9 @@ body.remote-view{background:#1A1A1A!important;overflow:auto!important;height:aut
 .wb-c{background:#FF5F56}.wb-m{background:#FFBD2E}.wb-x{background:#27C93F}
 
 /* Toolbar */
-.toolbar{height:42px;background:#2C2A24;border-bottom:1px solid #3A372F;display:flex;align-items:center;gap:6px;padding:0 12px;flex-shrink:0}
-.tool{background:#37342C;border:1px solid #45412F;color:#E6E1D2;font-size:12px;padding:5px 11px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.toolbar{height:42px;background:#2C2A24;border-bottom:1px solid #3A372F;display:flex;align-items:center;gap:6px;padding:0 12px;flex-shrink:0;overflow-x:auto;overflow-y:hidden}
+.toolbar::-webkit-scrollbar{height:5px}.toolbar::-webkit-scrollbar-thumb{background:#4A4637;border-radius:3px}
+.tool{flex:none;background:#37342C;border:1px solid #45412F;color:#E6E1D2;font-size:12px;padding:5px 11px;border-radius:6px;cursor:pointer;white-space:nowrap}
 .tool:hover{border-color:#B8860B;background:#403B2E;color:#fff}
 .tsep{width:1px;height:20px;background:#45412F;margin:0 4px}
 .tlabel{font-size:11px;color:#A9A293;display:flex;align-items:center;gap:5px;cursor:pointer}
@@ -598,6 +652,11 @@ body.presenting .present-hud{display:block}
   <span class="tsep"></span>
   <button class="tool" onclick="openTpl()">📐 Templates</button>
   <button class="tool" onclick="autoLayout()" title="Auto-arrange connected nodes — click repeatedly to cycle through layout styles (tree, horizontal tree, radial)">⬡ Layout</button>
+  <button class="tool" id="obsBtn" onclick="openObsPanel()" title="OBS links, connection, hotkeys">📡 OBS</button>
+  <button class="tool" onclick="openPrompter()" title="Teleprompter window — shows the live asset's commentary">📜 Prompter</button>
+  <button class="tool" onclick="openSession()" title="Cut-in timeline, YouTube chapters, EDL export">🎞 Session</button>
+  <button class="tool" id="laserBtn" onclick="toggleLaser()" title="Laser pointer on the Mirror overlay (Ctrl+Alt+L)">🔴 Laser</button>
+  <button class="tool" onclick="insertFrame()" title="Add a 16:9 thumbnail frame">🖼 Frame</button>
   <button class="tool" onclick="openNotesWindow()" title="Open Presenter Notes in a separate window — commentary per asset, never seen on the board or in OBS">🗒 Notes</button>
   <button class="tool" onclick="openExportModal()">💾 Export PNG</button>
   <span class="tsep"></span>
@@ -636,6 +695,102 @@ body.presenting .present-hud{display:block}
   </div>
 </div>
 
+<div class="cut-hud" id="cutHud"></div>
+<!-- Per-asset cut-in settings -->
+<div class="bg" id="cutEditBg" onclick="if(event.target===this)closeCutEditor()">
+  <div class="box" style="width:460px;max-width:94vw;padding:0;overflow:hidden">
+    <div style="padding:14px 18px 10px;border-bottom:1px solid #333">
+      <div style="font-size:13px;font-weight:600;color:#E9E7DF">🎬 Cut-in settings</div>
+      <div id="cutEditLabel" style="font-size:11px;color:#777;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+    </div>
+    <div class="fg">
+      <label>Position<select id="cutPos"><option value="">Center (default)</option><option value="lower">Lower third</option><option value="left">Left half</option><option value="right">Right half</option><option value="full">Full screen</option></select></label>
+      <label>Animation<select id="cutAnim"><option value="">Default (pop)</option><option value="pop">Pop</option><option value="fade">Fade</option><option value="slide">Slide up</option></select></label>
+      <label>Size (0.1–1 of frame)<input id="cutFit" type="number" step="0.05" min="0.1" max="1" placeholder="0.8"></label>
+      <label>Target seconds<input id="cutDur" type="number" min="1" placeholder="pacing timer"></label>
+      <label>When target is reached<select id="cutAuto"><option value="">Just turn the timer red</option><option value="1">Auto-hide the cut-in</option></select></label>
+      <label>OBS scene to switch to<input id="cutScene" list="cutScenes" placeholder="(none)"><datalist id="cutScenes"></datalist></label>
+      <label style="grid-column:1/3">Sound effect when it appears
+        <span style="display:flex;gap:6px"><input id="cutSfx" placeholder="(none)" style="flex:1"><button class="mb mb-s" style="padding:5px 10px" onclick="cutPickSfx()">Browse…</button></span></label>
+      <label style="grid-column:1/3">YouTube chapter title<input id="cutChapter" placeholder="(optional — used by the chapter generator and OBS chapter markers)"></label>
+    </div>
+    <div style="padding:0 18px 8px;font-size:10.5px;color:#666">Only affects the one-at-a-time cut-in overlay. Blank = use the defaults. Scene switching needs 📡 OBS connected.</div>
+    <div style="padding:10px 18px;border-top:1px solid #2A2A2A;text-align:right">
+      <button class="mb mb-s" onclick="closeCutEditor()">Cancel</button>
+      <button class="mb mb-p" onclick="saveCutEditor()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Session timeline -->
+<div class="bg" id="sessBg" onclick="if(event.target===this)closeSession()">
+  <div class="box" style="width:640px;max-width:95vw;max-height:88vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
+    <div style="padding:14px 18px 10px;border-bottom:1px solid #333;display:flex;align-items:center;justify-content:space-between;flex:none">
+      <span style="font-size:14px;font-weight:600;color:#E9E7DF">🎞 Session timeline</span>
+      <button style="background:none;border:none;color:#888;font-size:16px;cursor:pointer" onclick="closeSession()">✕</button>
+    </div>
+    <div style="padding:10px 18px 0;display:flex;gap:8px;align-items:center;flex:none">
+      <button class="seg" id="sessModeLog" onclick="setSessMode('log')">Recorded</button>
+      <button class="seg" id="sessModePlan" onclick="setSessMode('plan')">Planned</button>
+      <span id="sessTotal" style="margin-left:auto;font-size:11px;color:#9A9686"></span>
+    </div>
+    <div id="sessNote" style="padding:6px 18px;font-size:11px;color:#777;flex:none"></div>
+    <div style="overflow-y:auto;padding:0 18px;flex:1"><table class="sess-t"><thead><tr><th>#</th><th>Start</th><th>Asset</th><th>Type</th><th>Length / target</th></tr></thead><tbody id="sessRows"></tbody></table></div>
+    <div style="padding:10px 18px;border-top:1px solid #2A2A2A;display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex:none">
+      <button class="mb mb-p" onclick="sessCopyChapters()">📋 Copy YouTube chapters</button>
+      <button class="mb mb-s" onclick="sessSave('chapters')">Save .txt</button>
+      <button class="mb mb-s" onclick="sessSave('edl')" title="CMX3600 EDL — import into Premiere / DaVinci Resolve (File → Import)">Export EDL</button>
+      <button class="mb mb-s" onclick="sessSave('csv')">Export CSV</button>
+      <label style="font-size:11px;color:#888">fps <select id="sessFps" style="background:#141414;color:#DDD;border:1px solid #333;border-radius:4px"><option>24</option><option selected>30</option><option>60</option></select></label>
+      <button class="mb mb-s" style="margin-left:auto" onclick="resetCutLog()" title="Start the timeline from 0:00 now">↺ Reset timeline</button>
+    </div>
+  </div>
+</div>
+
+<!-- OBS connection / hotkeys / links -->
+<div class="bg" id="obsBg" onclick="if(event.target===this)closeObsPanel()">
+  <div class="box" style="width:600px;max-width:95vw;max-height:90vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
+    <div style="padding:14px 18px 10px;border-bottom:1px solid #333;display:flex;align-items:center;justify-content:space-between;flex:none">
+      <span style="font-size:14px;font-weight:600;color:#E9E7DF">📡 OBS control</span>
+      <span><button class="mb mb-s" style="padding:4px 10px;font-size:11px" onclick="closeObsPanel();openGuide()">📖 Open the OBS Guide</button>
+      <button style="background:none;border:none;color:#888;font-size:16px;cursor:pointer" onclick="closeObsPanel()">✕</button></span>
+    </div>
+    <div style="overflow-y:auto;padding:14px 18px" class="obs-pane">
+      <h4>1 · Overlay links <span>— paste into OBS Browser Sources</span></h4>
+      <div class="lk"><span><b>Cut-in</b><small>one asset at a time</small></span><code id="obsLink_solo"></code><button class="mb mb-s" onclick="copyObsKind('solo')">Copy</button></div>
+      <div class="lk"><span><b>Mirror</b><small>whole board</small></span><code id="obsLink_mirror"></code><button class="mb mb-s" onclick="copyObsKind('mirror')">Copy</button></div>
+      <div class="lk"><span><b>Control dock</b><small>OBS custom dock</small></span><code id="obsLink_dock"></code><button class="mb mb-s" onclick="copyObsKind('dock')">Copy</button></div>
+      <div class="lk"><span><b>Prompter</b><small>browser / tablet</small></span><code id="obsLink_prompter"></code><button class="mb mb-s" onclick="copyObsKind('prompter')">Copy</button></div>
+
+      <h4>2 · Connect to OBS <span>— scene switching, recording, chapters</span></h4>
+      <div id="obsStatus" class="obs-status"></div>
+      <div class="fg2">
+        <label>Host<input id="obsHost" value="127.0.0.1"></label>
+        <label>Port<input id="obsPort" value="4455" type="number"></label>
+        <label style="grid-column:1/3">Password<input id="obsPwd" type="password" placeholder="WebSocket password"></label>
+      </div>
+      <div class="chk"><label><input type="checkbox" id="obsRemember"> Remember password (encrypted by Windows)</label><label><input type="checkbox" id="obsAuto"> Connect automatically at startup</label></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">
+        <button class="mb mb-p" onclick="obsConnectClick()">Connect</button>
+        <button class="mb mb-s" onclick="window.nabu.obsDisconnect()">Disconnect</button>
+        <button class="mb mb-s" onclick="obsRec(true)">● Start recording</button>
+        <button class="mb mb-s" onclick="obsRec(false)">■ Stop recording</button>
+      </div>
+      <div class="chk"><label><input type="checkbox" id="obsAutoChap" onchange="setObsPref('autoChapter',this.checked)"> Drop a chapter marker in the recording at every cut-in</label>
+      <label><input type="checkbox" id="obsRetScene" onchange="setObsPref('returnScene',this.checked)"> Switch back to my previous scene when I hide a cut-in</label></div>
+
+      <h4>3 · Hotkeys <span>— work even while OBS has focus; click a box, then press the combo</span></h4>
+      <div class="fg2 hk">
+        <label>Next<input id="hk_next" readonly onkeydown="hkKey(event,'next')"></label>
+        <label>Previous<input id="hk_prev" readonly onkeydown="hkKey(event,'prev')"></label>
+        <label>Hide<input id="hk_hide" readonly onkeydown="hkKey(event,'hide')"></label>
+        <label>Laser pointer on/off<input id="hk_laser" readonly onkeydown="hkKey(event,'laser')"></label>
+      </div>
+      <div style="margin:6px 0"><button class="mb mb-p" onclick="saveHotkeys()">Save shortcuts</button> <button class="mb mb-s" onclick="resetHotkeys()">Reset to defaults</button></div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <div class="preview-bg" id="previewBg">
   <div class="preview-box">
@@ -649,7 +804,7 @@ body.presenting .present-hud{display:block}
 
 <!-- Shortcuts panel -->
 <div class="bg" id="shortcutsBg" onclick="if(event.target===this)closeShortcuts()">
-  <div class="box" style="width:640px;max-width:95vw;max-height:88vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
+  <div class="box" style="width:780px;max-width:95vw;max-height:90vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
     <div style="padding:16px 22px 12px;border-bottom:1px solid #333;display:flex;align-items:center;justify-content:space-between;flex:none">
       <span style="font-size:14px;font-weight:600;color:#E9E7DF">❓ Help</span>
       <button style="background:none;border:none;color:#888;font-size:16px;cursor:pointer;padding:0 4px" onclick="closeShortcuts()">✕</button>
@@ -657,6 +812,7 @@ body.presenting .present-hud{display:block}
     <div class="help-tabs">
       <button class="help-tab active" id="helpTabSc" onclick="helpTab('sc')">⌨ Shortcuts</button>
       <button class="help-tab" id="helpTabFt" onclick="helpTab('ft')">✨ Features</button>
+      <button class="help-tab" id="helpTabGd" onclick="helpTab('gd')">🎬 OBS Guide</button>
     </div>
 
     <div id="helpPaneSc" style="overflow-y:auto;padding:18px 22px;display:grid;grid-template-columns:1fr 1fr;gap:0 32px">
@@ -741,7 +897,7 @@ body.presenting .present-hud{display:block}
         <button class="mb mb-s" style="margin-top:7px" onclick="copyObsLink()">📋 Copy OBS overlay link</button></div></div>
 
       <div class="ft-item"><div class="ft-title">🎬 One-at-a-time cut-ins for OBS (like editing)</div>
-        <div class="ft-desc">Shows <b>one numbered asset at a time</b> on a transparent background, in serial order (1, 1.1, 2, 3…). In OBS add a <b>second Browser Source</b> with the cut-in link below. Then trigger it with <kbd>Ctrl+Alt+→</kbd> (next), <kbd>Ctrl+Alt+←</kbd> (previous), <kbd>Ctrl+Alt+↓</kbd> (hide) — these work even while OBS is focused — or add the <b>control dock</b> in OBS (<b>View → Docks → Custom Browser Docks</b>) for big Next/Prev/Hide buttons and a click-to-jump list. Videos and sounds play and auto-hide when finished. The next press after the last asset hides it. Options on the link: <code>&amp;fit=0.8</code> size, <code>&amp;anim=pop|fade|slide</code>, <code>&amp;autohide=0</code>. Anything can also call <code>/obs-cmd?a=next|prev|hide|goto&amp;n=3</code> (Stream Deck, etc.).<br>
+        <div class="ft-desc">Shows <b>one numbered asset at a time</b> on a transparent background, in serial order (1, 1.1, 2, 3…). In OBS add a <b>second Browser Source</b> with the cut-in link below. Then trigger it with <kbd>Ctrl+Alt+→</kbd> (next), <kbd>Ctrl+Alt+←</kbd> (previous), <kbd>Ctrl+Alt+↓</kbd> (hide) — these work even while OBS is focused — or add the <b>control dock</b> in OBS (<b>View → Docks → Custom Browser Docks</b>) for big Next/Prev/Hide buttons and a click-to-jump list. Videos and sounds play and auto-hide when finished. The next press after the last asset hides it. <b>Full walkthrough: see the 🎬 OBS Guide tab.</b> Options on the link: <code>&amp;fit=0.8</code> size, <code>&amp;anim=pop|fade|slide</code>, <code>&amp;autohide=0</code>. Anything can also call <code>/obs-cmd?a=next|prev|hide|goto&amp;n=3</code> (Stream Deck, etc.).<br>
         <button class="mb mb-s" style="margin-top:7px" onclick="copyObsSoloLink()">📋 Copy cut-in link</button>
         <button class="mb mb-s" style="margin-top:7px" onclick="copyObsDockLink()">📋 Copy control-dock link</button></div></div>
 
@@ -801,8 +957,176 @@ body.presenting .present-hud{display:block}
 
     </div>
 
+    <div id="helpPaneGd" class="gd">
+      <h3>🎬 OBS &amp; YouTube Guide</h3>
+      <div class="lead">Everything you need to run NabuBrainstorm live while recording. New here? Follow <b>START HERE</b> below, one step at a time.</div>
+
+      <details open><summary>🧑‍🏫 START HERE — step-by-step, nothing assumed</summary><div class="sec">
+        <div class="tip">Follow these in order. Each step says exactly what to click and what you should <b>see</b>. If what you see is different, jump to <b>🛠 Troubleshooting</b> at the bottom.</div>
+
+        <h3 style="margin:12px 0 4px">PART A — One-time setup (about 10 minutes)</h3>
+
+        <div class="st"><span class="nm">1</span><div><b>Put 3 test items on the board.</b><br>
+          • Click the toolbar button <b>＋ Text</b> → click on the board → type <code>Hello</code> → click an empty spot.<br>
+          • Click <b>🖼 Image</b> → choose any picture.<br>
+          • Click <b>📌 Sticky</b> → click the board → type <code>Third</code>.<br>
+          <i>You should see:</i> a small gold circle with a number (1, 2, 3) on the corner of each item. That number is the order they will appear on your video.</div></div>
+
+        <div class="st"><span class="nm">2</span><div><b>Copy the Cut-in link.</b><br>
+          Click <b>📡 OBS</b> in the toolbar. In the box “1 · Overlay links”, click <b>Copy</b> on the <b>Cut-in</b> row. Close the box.<br>
+          <i>You should see:</i> a message “Link copied ✓”.</div></div>
+
+        <div class="st"><span class="nm">3</span><div><b>Open OBS and make the browser source.</b><br>
+          a) In OBS, at the bottom, find the <b>Sources</b> box → click the <b>+</b> button.<br>
+          b) Choose <b>Browser</b> → leave “Create new” selected → type the name <code>Cut-ins</code> → <b>OK</b>.<br>
+          c) In the <b>URL</b> field, delete what is there and <b>paste</b> (Ctrl+V) the link.<br>
+          d) Set <b>Width</b> to <code>1920</code> and <b>Height</b> to <code>1080</code>.<br>
+          e) Tick <b>“Control audio via OBS”</b>.<br>
+          f) Make sure “Shutdown source when not visible” and “Refresh browser when scene becomes active” are <b>not</b> ticked.<br>
+          g) Click <b>OK</b>.<br>
+          <i>You should see:</i> “Cut-ins” in the Sources list. The preview is empty — that is correct, nothing is showing yet.</div></div>
+
+        <div class="st"><span class="nm">4</span><div><b>Put it in front of your webcam.</b><br>
+          In the Sources list, drag <b>Cut-ins</b> so it is <b>above</b> your webcam (top of the list = in front).</div></div>
+
+        <div class="st"><span class="nm">5</span><div><b>Test it.</b><br>
+          Keep NabuBrainstorm open (minimising is fine). Hold <kbd>Ctrl</kbd> + <kbd>Alt</kbd> and press <kbd>→</kbd> (right arrow).<br>
+          <i>You should see:</i> your “Hello” item appears big in the middle of the OBS preview, with <b>no background</b>, over your webcam. In the app, a red <b>● LIVE 1</b> label appears bottom-left.<br>
+          Press the same keys again → item 2 replaces it. Again → item 3. Again → everything disappears.<br>
+          <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>←</kbd> = go back one · <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>↓</kbd> = hide now.</div></div>
+
+        <div class="st"><span class="nm">6</span><div><b>(Optional, recommended) Add buttons inside OBS.</b><br>
+          In the app: <b>📡 OBS</b> → click <b>Copy</b> on the <b>Control dock</b> row. In OBS: top menu <b>View → Docks → Custom Browser Docks…</b> → Dock Name <code>Cut-ins</code> → paste in URL → <b>Apply</b> → <b>Close</b>.<br>
+          <i>You should see:</i> a new panel in OBS with big <b>Prev / Next / Hide</b> buttons and a list of your items. Click an item to jump to it.</div></div>
+
+        <div class="st"><span class="nm">7</span><div><b>(Optional) Let the app control OBS (scenes, recording, chapters).</b><br>
+          In OBS: <b>Tools → WebSocket Server Settings</b> → tick <b>Enable WebSocket server</b> → tick <b>Enable Authentication</b> → type a password → <b>OK</b>.<br>
+          In the app: <b>📡 OBS</b> → section 2 → type the same password → tick <b>Remember password</b> and <b>Connect automatically</b> → click <b>Connect</b>.<br>
+          <i>You should see:</i> a green dot and “Connected · scene …”.</div></div>
+
+        <h3 style="margin:16px 0 4px">PART B — For every video</h3>
+        <div class="st"><span class="nm">1</span><div><b>Collect:</b> put your images, clips, quotes and notes on the board.</div></div>
+        <div class="st"><span class="nm">2</span><div><b>Order:</b> check the numbers. To change one, click its gold number and type the new one.</div></div>
+        <div class="st"><span class="nm">3</span><div><b>Write what you will say:</b> right-click an item → <b>🗒 Commentary…</b> → type → Save.</div></div>
+        <div class="st"><span class="nm">4</span><div><b>Make an item smaller / lower / with a sound:</b> right-click it → <b>🎬 Cut-in settings…</b> → pick “Lower third” (or anything else) → Save.</div></div>
+        <div class="st"><span class="nm">5</span><div><b>Open your script screen:</b> click <b>📜 Prompter</b>, drag that window to the monitor next to your camera.</div></div>
+        <div class="st"><span class="nm">6</span><div><b>Record:</b> start recording in OBS (or 📡 OBS → <b>● Start recording</b>). Talk. Press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>→</kbd> when you reach each point.</div></div>
+        <div class="st"><span class="nm">7</span><div><b>After:</b> click <b>🎞 Session</b> → <b>📋 Copy YouTube chapters</b> → paste into your video description. For the thumbnail: <b>🖼 Frame</b> → arrange → right-click the frame label → <b>Export as JPG</b>.</div></div>
+
+        <h3 style="margin:16px 0 4px">PART C — Updating the app</h3>
+        <div class="st"><span class="nm">1</span><div>Click <b>⟳ Update</b> at the top. If a newer version is found it says <b>“Update to vX”</b> → click it again → then <b>“Restart to update”</b>.</div></div>
+        <div class="st"><span class="nm">2</span><div>No internet / no online release? Open <b>❓ Help → 📁 Updates folder</b> (bottom of this window), drop the new <code>NabuBrainstorm Setup x.y.z.exe</code> in it, and click <b>⟳ Update</b> again.</div></div>
+      </div></details>
+
+      <details><summary>⚡ Quick start — short version</summary><div class="sec">
+        <div class="tip"><b>The idea:</b> you number your assets 1, 2, 3… on the board. In OBS, one special <i>Browser Source</i> shows <b>one asset at a time</b> on a transparent background, on top of your webcam — exactly like dropping a PNG or clip on the timeline, but live. You press a hotkey (or a button) to bring up the next one.</div>
+        <div class="st"><span class="nm">1</span><div><b>Number your assets.</b> Every asset has a small gold number badge. That number is the order they will appear in. Click a badge to change it. Sub-assets (Alt+drag onto another asset) appear as 1.1, 1.2 right after their parent.</div></div>
+        <div class="st"><span class="nm">2</span><div><b>Copy the cut-in link.</b> Click the toolbar button <b>📡 OBS</b> → <b>Copy</b> next to “Cut-in”, or use the box here:
+          <div class="linkrow"><code id="gdLink_solo"></code><button class="mb mb-s" onclick="copyObsKind('solo')">Copy</button></div></div></div>
+        <div class="st"><span class="nm">3</span><div><b>Add it in OBS.</b> In your scene click <b>+</b> under <i>Sources</i> → <b>Browser</b> → name it “Cut-ins” → paste the link into <b>URL</b>. Set <b>Width 1920</b> and <b>Height 1080</b> (your canvas size). Tick <b>Control audio via OBS</b> (so you hear videos). Leave “Shutdown source when not visible” and “Refresh when scene becomes active” <b>unticked</b>. Click OK.</div></div>
+        <div class="st"><span class="nm">4</span><div><b>Put it above your webcam.</b> In the Sources list, drag “Cut-ins” <b>above</b> your webcam (higher in the list = in front).</div></div>
+        <div class="st"><span class="nm">5</span><div><b>Go live.</b> Keep NabuBrainstorm running. Press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>→</kbd> — asset 1 appears. Press again for 2, and so on. <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>←</kbd> goes back, <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>↓</kbd> hides it. These hotkeys work even while OBS is focused. After the last asset, one more press hides it.</div></div>
+        <div class="tip">The app must stay open (it can be minimized) — it is the “server” OBS reads from. A red <b>● LIVE</b> pill at the bottom-left of the app shows what is on screen and how long it has been up.</div>
+      </div></details>
+
+      <details><summary>🎛 Control dock — big buttons inside OBS</summary><div class="sec">
+        <div class="st"><span class="nm">1</span><div>In OBS: <b>View → Docks → Custom Browser Docks…</b></div></div>
+        <div class="st"><span class="nm">2</span><div>Name: <code>Cut-ins</code> · URL: paste this, then <b>Apply</b>:
+          <div class="linkrow"><code id="gdLink_dock"></code><button class="mb mb-s" onclick="copyObsKind('dock')">Copy</button></div></div></div>
+        <div class="st"><span class="nm">3</span><div>A panel appears with <b>◀ Prev</b>, <b>Next ▶</b>, <b>✕ Hide</b> and a clickable list of all your assets (with thumbnails) — click any to jump straight to it. It also shows the live timer. Drag the dock anywhere in OBS.</div></div>
+        <div class="tip"><b>Stream Deck / other tools:</b> anything that can open a URL can control it: <code>http://127.0.0.1:41414/obs-cmd?a=next&amp;k=YOUR_KEY</code> (also <code>prev</code>, <code>hide</code>, <code>toggle</code>, <code>goto&amp;n=3</code>). Copy your key from any link above (the part after <code>k=</code>).</div>
+      </div></details>
+
+      <details><summary>🎨 Per-asset settings — position, animation, sound, scene</summary><div class="sec">
+        Right-click any asset → <b>🎬 Cut-in settings…</b>. Leave a field blank to use the default.
+        <table><tr><th>Setting</th><th>What it does</th></tr>
+        <tr><td>Position</td><td>Center, <b>Lower third</b> (small, bottom of screen), Left half, Right half, or Full screen.</td></tr>
+        <tr><td>Animation</td><td>Pop, Fade or Slide-up when it appears/disappears.</td></tr>
+        <tr><td>Size</td><td>0.1–1 = fraction of the frame it may fill (default 0.8).</td></tr>
+        <tr><td>Target seconds</td><td>Your planned time on this asset. The live timer turns <b style="color:#E63946">red</b> when you run over. Also used by the “Planned” timeline.</td></tr>
+        <tr><td>Auto-hide</td><td>Optionally hide the cut-in automatically when the target is reached.</td></tr>
+        <tr><td>OBS scene</td><td>Switch OBS to this scene when the asset appears (needs 📡 OBS connected). It switches back when you hide.</td></tr>
+        <tr><td>Sound effect</td><td>An audio file (whoosh, ding…) that plays when the asset appears.</td></tr>
+        <tr><td>Chapter title</td><td>Name used in the YouTube chapter list and the OBS recording chapter marker.</td></tr></table>
+        <div class="tip">Videos and sound assets <b>play automatically</b> and the cut-in hides when they finish. Videos should be <b>H.264 MP4</b> — it is the format OBS’s built-in browser plays most reliably.</div>
+      </div></details>
+
+      <details><summary>📡 Connect the app to OBS — scenes, recording, chapters</summary><div class="sec">
+        This is optional but powerful: the app can switch scenes, start/stop recording, and drop a <b>chapter marker</b> in your recording at every cut-in.
+        <div class="st"><span class="nm">1</span><div>In OBS: <b>Tools → WebSocket Server Settings</b> → tick <b>Enable WebSocket server</b>. Leave port <code>4455</code>. Tick <b>Enable Authentication</b> and set a password (use “Show Connect Info” if you want to see it again). Click OK.</div></div>
+        <div class="st"><span class="nm">2</span><div>In the app: <b>📡 OBS</b> → section 2 → enter the password → <b>Connect</b>. The dot turns green and shows your current scene and recording state.</div></div>
+        <div class="st"><span class="nm">3</span><div>Tick <b>Remember password</b> (encrypted by Windows) and <b>Connect automatically</b> so it just works every time.</div></div>
+        <table><tr><th>You get</th><th>Notes</th></tr>
+        <tr><td>Scene switch per asset</td><td>Set in Cut-in settings. Auto-returns to your previous scene on Hide.</td></tr>
+        <tr><td>Start / Stop recording buttons</td><td>In the 📡 OBS panel. Starting a recording also resets the app’s timeline to 0:00 so chapter times match your video.</td></tr>
+        <tr><td>Chapter markers in the recording</td><td>Needs OBS 30.2+ with <b>MKV</b> or <b>Hybrid MP4</b> as the recording format. Premiere/Resolve show them as markers.</td></tr></table>
+        <div class="warn">If it will not connect: OBS must be running, the server enabled, and the password exact. A firewall prompt for OBS should be allowed on “Private networks”.</div>
+      </div></details>
+
+      <details><summary>📜 Teleprompter — read your commentary while recording</summary><div class="sec">
+        Write what you want to say in <b>right-click → 🗒 Commentary…</b> for each asset. Then click <b>📜 Prompter</b> in the toolbar: a separate window opens showing the commentary of the asset that is <b>live</b> (or selected), in big text, with a “NEXT” preview line and the timer.
+        <ul><li><b>A− / A+</b> text size · <b>⇋</b> mirror text (for a beam-splitter prompter glass) · <b>⏬ slider</b> auto-scroll speed.</li>
+        <li>Drag the window to the monitor next to your camera. It is a separate window, so OBS never captures it (unless you add it yourself).</li>
+        <li>Prefer a tablet or phone? Open the Prompter link from 📡 OBS in any browser on the <i>same PC</i>.</li></ul>
+      </div></details>
+
+      <details><summary>🎞 Session timeline → YouTube chapters &amp; editor files</summary><div class="sec">
+        Every cut-in you trigger is logged with its time. Click <b>🎞 Session</b> in the toolbar:
+        <ul><li><b>Recorded</b> = what actually happened (0:00 is the moment OBS recording started, or your first cut-in if OBS isn’t connected). <b>Planned</b> = built from your numbering and Target seconds, without recording anything.</li>
+        <li><b>📋 Copy YouTube chapters</b> → paste into your video description. YouTube needs the first chapter at 0:00, at least 3 chapters, each 10 s or longer — the app handles 0:00 and 10 s for you and warns if there are fewer than 3.</li>
+        <li><b>Export EDL</b> → in <b>Premiere Pro</b>: File → Import the .edl; in <b>DaVinci Resolve</b>: File → Import → Timeline. Image/video/sound assets are placed at the exact times you cut to them (reel “AX”, clip name = file name). Relink the media if asked. Pick the fps that matches your sequence.</li>
+        <li><b>Export CSV</b> → a spreadsheet of times and lengths. <b>↺ Reset timeline</b> starts a fresh take.</li></ul>
+        <div class="tip">This does not record your video — it records <i>when</i> things appeared. Use it to place the same graphics in your editor, or to skip editing entirely by recording the overlay live.</div>
+      </div></details>
+
+      <details><summary>🖼 Thumbnail workspace (A/B test frames)</summary><div class="sec">
+        Click <b>🖼 Frame</b> in the toolbar to drop a dashed 16:9 <b>thumbnail frame</b> on the board. Arrange images, text and stickies <i>inside</i> it. Right-click the frame’s yellow label to:
+        <ul><li><b>Export as JPG / PNG</b> — saved at 1280 px wide (YouTube’s recommended size). Use JPG: YouTube’s limit is 2 MB.</li>
+        <li><b>Duplicate as variant</b> — makes Thumbnail B next to A so you can test two designs.</li>
+        <li><b>Frame background…</b> — set the background color.</li></ul>
+        The <b>📐 Templates → Thumbnail A/B Test</b> template sets up two frames for you. Frames never get a number and are never part of the cut-ins.
+      </div></details>
+
+      <details><summary>🔴 Laser pointer &amp; mirror overlay</summary><div class="sec">
+        The <b>Mirror</b> overlay (<code id="gdLink_mirror"></code> <button class="mb mb-s" style="padding:2px 8px" onclick="copyObsKind('mirror')">Copy</button>) shows your <i>whole board</i> live, transparent — use it when you want viewers to see the map itself. Pan, zoom and <kbd>F9</kbd> presentation steps are mirrored.
+        <br>Turn on the <b>🔴 Laser</b> toolbar button (or <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>L</kbd>): your mouse becomes a glowing red dot on the Mirror overlay, and every click makes a ping ripple. Great for “look at this part”. (It points on the board, so it shows on the Mirror source, not the Cut-in source.)
+        <div class="tip">You can use both sources at once: Mirror at the bottom of the stack, Cut-ins above it.</div>
+      </div></details>
+
+      <details><summary>🧭 A typical video, start to finish</summary><div class="sec">
+        <div class="st"><span class="nm">1</span><div><b>Plan:</b> collect images, clips, quotes on the board; draw wires to show relationships. Use a Template if you like.</div></div>
+        <div class="st"><span class="nm">2</span><div><b>Order:</b> number assets in the order you will talk about them. Write Commentary for what you will say.</div></div>
+        <div class="st"><span class="nm">3</span><div><b>Polish:</b> set position / sound / target seconds on key assets. Check <b>🎞 Session → Planned</b> to see your expected length.</div></div>
+        <div class="st"><span class="nm">4</span><div><b>OBS:</b> Browser Source (cut-ins) above webcam, optional dock, connect WebSocket. Open <b>📜 Prompter</b> on your second monitor.</div></div>
+        <div class="st"><span class="nm">5</span><div><b>Record:</b> start recording (use the app button to reset the timeline), talk, tap <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>→</kbd> at each point.</div></div>
+        <div class="st"><span class="nm">6</span><div><b>Publish:</b> 🎞 Session → <b>Copy chapters</b> for the description; <b>🖼 Frame</b> → export your thumbnail JPG.</div></div>
+      </div></details>
+
+      <details><summary>💾 Saving, backups &amp; updates</summary><div class="sec">
+        <ul><li>Boards autosave every ~30 s to <code>Documents\NabuBrainstorm\Autosaves</code> and Ctrl+S saves to <code>…\Saved</code>.</li>
+        <li><b>Smaller files:</b> images are stored once in <code>Documents\NabuBrainstorm\Assets</code> instead of inside every save, so saves are tiny and fast. <b>To back up or move a board, copy the whole <code>NabuBrainstorm</code> folder</b> (or use <i>Save As…</i>, which embeds the images in a single portable file).</li>
+        <li><b>⟳ Update</b> (top bar): two ways. <b>(a) Updates folder</b> — click <b>📁 Updates folder</b> in this Help window (bottom), drop a newer <code>NabuBrainstorm Setup x.y.z.exe</code> in it, then click ⟳ Update → <i>Update to vX</i> → <i>Restart to update</i>. <b>(b) Online</b> — if a new release is published on GitHub the same button finds and downloads it. Your boards are never touched.</li></ul>
+      </div></details>
+
+      <details><summary>🔒 Security — what the “key” in the links is</summary><div class="sec">
+        Your OBS links end with <code>k=…</code>: a private key that stops websites or other programs from controlling your overlay or reading your files. It never changes unless you delete it from <code>%APPDATA%\nabu-brainstorm\nabu-config.json</code>. If you share a screenshot of a link, regenerate the key (delete that line, restart the app, re-copy the links).
+      </div></details>
+
+      <details><summary>🛠 Troubleshooting</summary><div class="sec">
+        <div class="qa"><b>OBS shows nothing / blank.</b> Is NabuBrainstorm running? Is the asset <i>numbered</i>? Press Next once. Re-copy the link from 📡 OBS (the key must be included). In OBS right-click the source → <b>Refresh cache of current page</b>.</div>
+        <div class="qa"><b>Hotkey does nothing.</b> Another program may own that combo — open 📡 OBS → Hotkeys, click a box and press a new combination → Save. A red box means it could not be registered.</div>
+        <div class="qa"><b>A video appears but is black / silent.</b> Convert it to H.264 MP4 (HandBrake/FFmpeg). For sound, tick <b>Control audio via OBS</b> on the browser source and check the Audio Mixer.</div>
+        <div class="qa"><b>The cut-in is the wrong size or position.</b> The Browser Source width/height must match your canvas (Settings → Video → Base Resolution, usually 1920×1080). Adjust per asset with Size/Position.</div>
+        <div class="qa"><b>OBS won’t connect (📡).</b> Enable the WebSocket server in OBS, copy the password exactly, port 4455, then Connect.</div>
+        <div class="qa"><b>Chapter markers don’t appear in the recording.</b> Needs OBS 30.2+ and MKV or Hybrid-MP4 format (Settings → Output → Recording).</div>
+        <div class="qa"><b>Links stopped working after a reinstall/new PC.</b> Re-copy them: the key lives in your user settings folder.</div>
+        <div class="qa"><b>Port busy.</b> The app uses 41414 (or the next free one up to 41419). If your links use 41414 but the app picked another, close the other app that holds 41414 and restart.</div>
+      </div></details>
+    </div>
+
     <div style="padding:10px 18px;border-top:1px solid #2A2A2A;display:flex;align-items:center;justify-content:space-between;flex:none">
       <span id="helpVer" style="font-size:10.5px;color:#6E6A5E;font-family:monospace"></span>
+      <button class="mb mb-s" style="margin-left:auto;margin-right:8px;padding:5px 12px;font-size:11px" onclick="window.nabu.openUpdatesFolder()" title="Drop a newer installer here, then click ⟳ Update">📁 Updates folder</button>
       <button class="mb mb-s" onclick="closeShortcuts()">Close</button>
     </div>
   </div>
@@ -1085,11 +1409,11 @@ function fmtChecklist(){
 }
 function elById(id){ return board.elements.find(e=>e.id===id); }
 function nodeOf(id){ return document.querySelector('.el[data-id="'+id+'"]'); }
-function toast(m, force){
+function toast(m, force, ms){
   // While capture mode is live (OBS recording), suppress toasts so no app UI
   // pops on stream — only forced toasts (the capture toggle itself) show.
   if (!force && document.body.classList.contains('capture-mode')) return;
-  const t=document.getElementById('toast'); t.textContent=m; t.className='toast show'; clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),1800);
+  const t=document.getElementById('toast'); t.textContent=m; t.className='toast show'; clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),ms||1800);
 }
 
 // ── Asset attachments (sub-assets) ─────────────────────────────
@@ -1162,8 +1486,8 @@ function detachAsset(id){
 // ── Version / build stamp ─────────────────────────────────────
 // APP_VERSION is bumped by hand; BUILD_DATE is auto-stamped by deploy.ps1
 // (it replaces the 2026-07-04 token in the deployed copy each deploy).
-const APP_VERSION = '1.11.0';
-const BUILD_DATE  = '2026-07-04';
+const APP_VERSION = '1.12.0';
+const BUILD_DATE  = '2026-10-07';
 (function stampVersion(){
   const dated = /^\d{4}-\d{2}-\d{2}/.test(BUILD_DATE);
   const badge = document.getElementById('verBadge');
@@ -1177,6 +1501,10 @@ const exportMode = new URLSearchParams(location.search).get('exportMode') === '1
 const obsView = new URLSearchParams(location.search).has('obs');
 const notesView = new URLSearchParams(location.search).has('notes');
 const remoteView = new URLSearchParams(location.search).has('remote');
+const prompterView = new URLSearchParams(location.search).has('prompter');
+// Session key (from main.js) guards /obs-* and /media — every overlay/dock/prompter URL carries it
+const K = new URLSearchParams(location.search).get('k') || '';
+const kq = (sep = '&') => K ? sep + 'k=' + encodeURIComponent(K) : '';
 const soloView = obsView && new URLSearchParams(location.search).get('mode') === 'solo';
 if (obsView) document.body.classList.add('obs-view');
 if (notesView) document.body.classList.add('notes-view');
@@ -1185,6 +1513,7 @@ async function init(){
   if (exportMode) { setupExportMode(); return; }
   if (obsView)    { setupObsView();    return; }
   if (remoteView) { setupRemoteView(); return; }
+  if (prompterView) { setupPrompterView(); return; }
   if (notesView)  { setupNotesView();  return; }
   const params = new URLSearchParams(location.search);
   const f = params.get('file');
@@ -1222,7 +1551,7 @@ async function init(){
 // chrome, no interaction, no window.nabu. Mirrors the live board via SSE
 // pushed by the main window through the local server (/obs-state → /obs-events).
 let _obsFocusId = null;
-let _showIdx = -1, _liveId = null, _soloEl = null, _rmCur = null;  // cut-in state (declared early: render() reads _liveId)
+let _showIdx = -1, _liveId = null, _soloEl = null, _rmCur = null, _rmTs = 0, _rmTarget = 0;  // cut-in state (declared early: render() reads _liveId)
 function setupObsView(){
   board = { title:'', elements:[], connectors:[] };
   if (soloView){
@@ -1230,10 +1559,11 @@ function setupObsView(){
     const l = document.createElement('div'); l.id = 'soloLayer'; document.body.appendChild(l);
   }
   render(); applyVP();
-  const es = new EventSource('/obs-events');
+  const es = new EventSource('/obs-events' + kq('?'));
   es.onmessage = ev => {
     let m; try { m = JSON.parse(ev.data); } catch(e){ return; }
     if (m.type === 'show'){ if (soloView) soloShow(m); return; }
+    if (m.type === 'laser'){ if (!soloView) laserApply(m); return; }
     if (m.type === 'board'){
       board.elements = m.elements || [];
       board.connectors = m.connectors || [];
@@ -1250,7 +1580,7 @@ function setupObsView(){
       const z = m.z * scale;
       const cx = (m.vw/2 - m.x) / m.z, cy = (m.vh/2 - m.y) / m.z;
       vpX = ow/2 - cx*z; vpY = oh/2 - cy*z; vpZ = z;
-      applyVP();
+      applyVP(); placeLaser();
     } else if (m.type === 'pos'){
       // Lightweight live positions during drags — no full re-render
       (m.items||[]).forEach(it => {
@@ -1294,7 +1624,7 @@ function nvBumpScale(delta){
 function setupNotesView(){
   board = { title:'', elements:[], connectors:[] };
   nvApplyPrefs(nvLoadPrefs());
-  const es = new EventSource('/obs-events');
+  const es = new EventSource('/obs-events' + kq('?'));
   es.onmessage = ev => {
     let m; try { m = JSON.parse(ev.data); } catch(e){ return; }
     if (m.type === 'board'){ board.elements = m.elements || []; renderNotesView(); }
@@ -1398,7 +1728,7 @@ function applyObsFocus(id){
 }
 
 // ── OBS overlay broadcasting (main window side) ───────────────
-function obsSend(obj){ try { fetch('/obs-state', { method:'POST', body: JSON.stringify(obj) }); } catch(e){} }
+function obsSend(obj){ try { fetch('/obs-state' + kq('?'), { method:'POST', body: JSON.stringify(obj) }); } catch(e){} }
 let _obsBoardT = null, _obsVpOk = true, _obsPosOk = true;
 function obsPushBoard(){ // full board — debounced, sent on structural changes
   if (obsView || exportMode) return;
@@ -1420,10 +1750,10 @@ function obsPushPos(){ // element positions — ~20fps during drags
     obsSend({ type:'pos', items: board.elements.map(e => ({ id:e.id, x:e.x, y:e.y })) });
   }, 50);
 }
-function copyObsSoloLink(){ navigator.clipboard.writeText(location.origin + '/board.html?obs=1&mode=solo'); toast('Cut-in link copied ✓', true); }
-function copyObsDockLink(){ navigator.clipboard.writeText(location.origin + '/board.html?remote=1'); toast('Control-dock link copied ✓', true); }
+function copyObsSoloLink(){ navigator.clipboard.writeText(location.origin + '/board.html?obs=1&mode=solo' + kq('&')); toast('Cut-in link copied ✓', true); }
+function copyObsDockLink(){ navigator.clipboard.writeText(location.origin + '/board.html?remote=1' + kq('&')); toast('Control-dock link copied ✓', true); }
 function copyObsLink(){
-  navigator.clipboard.writeText(location.origin + '/board.html?obs=1');
+  navigator.clipboard.writeText(location.origin + '/board.html?obs=1' + kq('&'));
   toast('OBS overlay link copied ✓', true);
 }
 
@@ -1431,7 +1761,7 @@ function copyObsLink(){
 function render(){
   // Sub-assets render normally (full size, clickable) — just tagged with
   // .el-subasset so they get the purple hover/selection treatment instead of gold.
-  document.getElementById('canvas').innerHTML = connSvgHtml() + board.elements.map(el=>{
+  document.getElementById('canvas').innerHTML = connSvgHtml() + board.elements.filter(e=>e.type==='frame').concat(board.elements.filter(e=>e.type!=='frame')).map(el=>{
     const h = elHtml(el);
     return el.hostId ? h.replace('class="el ', 'class="el el-subasset ') : h;
   }).join('');
@@ -1811,6 +2141,15 @@ function elHtml(el){
       <div class="resize-dims"></div>
     </div>`;
   }
+  // Thumbnail frame (16:9 export region) — click-through body, draggable label
+  if (el.type === 'frame'){
+    const fw = el.w || 640, fh = el.h || 360;
+    return `<div class="el el-frame${sel}" data-id="${el.id}" style="left:${el.x}px;top:${el.y}px;width:${fw}px;height:${fh}px;background:${esc(el.bg||'#1A1A1A')}33">
+      <div class="frame-tag">${esc(el.name||'Frame')} · 1280×${Math.round(1280*fh/fw)}</div>
+      <div class="rz rz-se" data-dir="se"></div><div class="rz rz-sw" data-dir="sw"></div><div class="rz rz-e" data-dir="e"></div><div class="rz rz-w" data-dir="w"></div>
+      <div class="resize-dims"></div>
+    </div>`;
+  }
   // Rich video card
   if (el.type === 'video'){
     const fileUrl = toFileUrl(el.path||'');
@@ -2014,7 +2353,7 @@ function vpAnimStep(ts){
 function nextSerial(){
   // Sub-assets keep a vestigial el.serial but show a derived "host.N" label instead —
   // they must NOT count toward the next top-level number, or top-level numbering gets gaps.
-  const top = board.elements.filter(e=>!e.hostId);
+  const top = board.elements.filter(e=>!e.hostId && e.type!=='frame');
   if (!top.length) return 1;
   const mx = Math.max(...top.map(e => e.serial || 0));
   return mx + 1;
@@ -2023,7 +2362,7 @@ function assignSerial(el){ el.serial = nextSerial(); return el; }
 // Compacts top-level serials back to a contiguous 1..N (preserving relative order) — called
 // after attach/detach since freeing or consuming a slot can otherwise leave gaps.
 function renumberTopLevel(){
-  const top = board.elements.filter(e=>!e.hostId).sort((a,b)=>(a.serial||0)-(b.serial||0));
+  const top = board.elements.filter(e=>!e.hostId && e.type!=='frame').sort((a,b)=>(a.serial||0)-(b.serial||0));
   top.forEach((e,i)=>{ e.serial = i+1; });
 }
 
@@ -2766,6 +3105,7 @@ document.addEventListener('mouseup', e => {
       const rw = Math.abs(p.x - lasso.x0), rh = Math.abs(p.y - lasso.y0);
       selectedIds.clear();
       board.elements.forEach(el => {
+        if (el.type==='frame') return;
         const n = nodeOf(el.id); if(!n) return;
         const ex=el.x, ey=el.y, ew=n.offsetWidth, eh=n.offsetHeight;
         if (ex < rx+rw && ex+ew > rx && ey < ry+rh && ey+eh > ry) selectedIds.add(el.id);
@@ -3222,7 +3562,7 @@ document.addEventListener('keyup', e => {
 // ── File preview ──────────────────────────────────────────────
 function toFileUrl(p){
   // OBS Browser Sources can't load file:// URLs — stream through the local server instead
-  if (obsView) return '/media?p=' + encodeURIComponent(p || '');
+  if (obsView) return '/media?p=' + encodeURIComponent(p || '') + kq('&');
   return 'file:///' + p.replace(/\\/g,'/').replace(/^\/+/,'');
 }
 
@@ -3651,6 +3991,12 @@ const TEMPLATES = [
     {type:'text',x:620,y:300,w:220,text:'Follow-up'},
     {type:'sticky',x:300,y:420,w:240,text:'🔑 Must-get soundbite',color:'#B8860B'},
   ]},
+  { name:'Thumbnail A/B Test', desc:'Two 16:9 thumbnail frames + idea notes — right-click a frame to export JPG', elements:[
+    {type:'frame',x:100,y:160,w:640,h:360,name:'Thumbnail A',bg:'#1A1A1A'},
+    {type:'frame',x:820,y:160,w:640,h:360,name:'Thumbnail B',bg:'#1A1A1A'},
+    {type:'sticky',x:100,y:560,w:300,text:'A — big face + 3 words',color:'#E9C46A'},
+    {type:'sticky',x:820,y:560,w:300,text:'B — object + contrast color',color:'#2A9D8F'}
+  ]},
   { name:'Blank Board', desc:'Start fresh with nothing', elements:[] },
 ];
 
@@ -3693,9 +4039,14 @@ function openCtxMenu(e, el){
   const items = [
     canPreview ? ['▶ Preview', ()=>{ openPreview(el); }] : null,
     canPreview ? null : null,
-    ['📋 Copy text', ()=>{ navigator.clipboard.writeText(text); toast('Copied'); }],
-    ['📝 Send to Script', ()=>{ sendToScript(el); }],
-    ['🗒 Commentary…', ()=>{ openNotesEditor(el.id); }],
+    el.type!=='frame' ? ['📋 Copy text', ()=>{ navigator.clipboard.writeText(text); toast('Copied'); }] : null,
+    el.type!=='frame' ? ['📝 Send to Script', ()=>{ sendToScript(el); }] : null,
+    el.type==='frame' ? ['🖼 Export as JPG (1280 px)', ()=>{ exportFrame(el.id,'jpg'); }] : null,
+    el.type==='frame' ? ['🖼 Export as PNG', ()=>{ exportFrame(el.id,'png'); }] : null,
+    el.type==='frame' ? ['📑 Duplicate as variant', ()=>{ dupFrame(el.id); }] : null,
+    el.type==='frame' ? ['🎨 Frame background…', ()=>{ setFrameBg(el.id); }] : null,
+    el.type!=='frame' ? ['🗒 Commentary…', ()=>{ openNotesEditor(el.id); }] : null,
+    el.type!=='frame' ? ['🎬 Cut-in settings…', ()=>{ openCutEditor(el.id); }] : null,
     ['🎨 Color tag', ()=>{ setTimeout(updateColorBar,0); }],
     el.hostId ? ['🔗 Detach from parent', ()=>{ detachAsset(el.id); }] : null,
     canUngroup ? ['🔓 Ungroup', ()=>{ ungroupSelection(); }] : null,
@@ -4223,12 +4574,15 @@ function closeShortcuts(){ document.getElementById('shortcutsBg').classList.remo
 function helpTab(which){
   document.getElementById('helpPaneSc').style.display = which==='sc' ? 'grid' : 'none';
   document.getElementById('helpPaneFt').style.display = which==='ft' ? 'block' : 'none';
+  document.getElementById('helpPaneGd').style.display = which==='gd' ? 'block' : 'none';
+  document.getElementById('helpTabGd').classList.toggle('active', which==='gd');
+  if (which==='gd') fillGuideLinks();
   document.getElementById('helpTabSc').classList.toggle('active', which==='sc');
   document.getElementById('helpTabFt').classList.toggle('active', which==='ft');
 }
 
 // ── Serial numbers & stats ────────────────────────────────────
-const TYPE_LABELS = { text:'Text', quote:'Quote', sticky:'Sticky', image:'Image', video:'Video', pdf:'PDF', sound:'Sound', link:'Link', embed:'Embed' };
+const TYPE_LABELS = { frame:'Frame', text:'Text', quote:'Quote', sticky:'Sticky', image:'Image', video:'Video', pdf:'PDF', sound:'Sound', link:'Link', embed:'Embed' };
 let serialsVisible = true;
 
 function updateStats(){
@@ -4305,7 +4659,7 @@ function toggleSerials(){
 function recalibrateSerials(){
   pushHistory();
   const ROW_TOL = 40;
-  const sorted = board.elements.filter(e=>!e.hostId).sort((a,b) => {
+  const sorted = board.elements.filter(e=>!e.hostId && e.type!=='frame').sort((a,b) => {
     if (Math.abs(a.y - b.y) > ROW_TOL) return a.y - b.y;
     return a.x - b.x;
   });
@@ -4319,7 +4673,7 @@ function clickSerial(e, id){
   const inp = document.createElement('input');
   // Bound by top-level count, not board.elements.length — sub-assets keep a vestigial
   // serial that doesn't occupy a slot in the visible numbering sequence.
-  const topCount = board.elements.filter(e=>!e.hostId).length;
+  const topCount = board.elements.filter(e=>!e.hostId && e.type!=='frame').length;
   inp.type = 'number'; inp.min = 1; inp.max = topCount; inp.value = el.serial ?? '';
   inp.style.cssText = `position:fixed;left:${e.clientX-17}px;top:${e.clientY-13}px;width:34px;height:26px;font-size:10px;text-align:center;background:#111;color:#FFD700;border:2px solid #B8860B;border-radius:4px;z-index:10050;padding:0;font-family:monospace;font-weight:700;outline:none`;
   document.body.appendChild(inp); inp.focus(); inp.select();
@@ -4366,12 +4720,13 @@ function setupUpdater(){
   const btn=document.getElementById('updBtn'); if(!btn) return;
   window.nabu.onUpdateStatus(s=>{
     _updState=s.state; btn.classList.toggle('ready',s.state==='ready'||s.state==='available');
+    const src = s.source==='folder' ? ' (Updates folder)' : '';
     const m={checking:['⟳ Checking…',''],none:['✓ Up to date','You have the latest version.'],
-      available:['⬇ Update to v'+s.version,'New version found — click to download.'],
-      downloading:['⬇ '+s.percent+'%',''],ready:['↻ Restart to update','Downloaded — click to restart and install.'],
-      dev:['⟳ Update','Updates only work in the installed app.'],error:['⚠ Retry update',s.message||'Update check failed.']}[s.state];
-    if(m){ btn.textContent=m[0]; if(m[1]) toast(m[1]); }
-    if(s.state==='none'||s.state==='dev'||s.state==='error') setTimeout(()=>{ if(_updState===s.state){ btn.textContent='⟳ Update'; btn.classList.remove('ready'); } },4000);
+      available:['⬇ Update to v'+s.version,'New version v'+s.version+src+' found — click again to continue.'],
+      downloading:['⬇ '+s.percent+'%',''],ready:['↻ Restart to update','Ready — click to restart and install v'+s.version+'.'],
+      dev:['⟳ Update','Updates only work in the installed app (not npm start).'],error:['⚠ Retry update',s.message||'Update check failed.']}[s.state];
+    if(m){ btn.textContent=m[0]; if(m[1]) toast(m[1], true, s.state==='error' ? 7000 : 3500); }
+    if(s.state==='none'||s.state==='dev'||s.state==='error') setTimeout(()=>{ if(_updState===s.state){ btn.textContent='⟳ Update'; btn.classList.remove('ready'); } },6000);
   });
 }
 setupUpdater();
@@ -4387,30 +4742,12 @@ function markLive(){
   document.querySelectorAll('.el.live-cut').forEach(n => n.classList.remove('live-cut'));
   if (_liveId){ const n = nodeOf(_liveId); if (n) n.classList.add('live-cut'); }
 }
-function showCmd(c){
-  if (!c) return;
-  const items = nvRundownItems();
-  if (!items.length){ toast('Nothing numbered to show yet — assets need serial numbers', true); return; }
-  let i = _showIdx;
-  if (c.a === 'next') i = (i + 1 >= items.length) ? -1 : i + 1;
-  else if (c.a === 'prev') i = i <= 0 ? 0 : i - 1;
-  else if (c.a === 'hide') i = -1;
-  else if (c.a === 'toggle') i = i >= 0 ? -1 : 0;
-  else if (c.a === 'goto'){
-    const k = items.findIndex(it => it.label === String(c.n));
-    if (k < 0){ toast('No asset numbered ' + c.n); return; }
-    i = k;
-  } else return;
-  _showIdx = i;
-  const it = items[i];
-  _liveId = it ? it.el.id : null;
-  markLive();
-  obsSend({ type:'show', id: _liveId, idx:i, total:items.length, label: it ? it.label : '' });
-  toast(it ? `🎬 LIVE ${it.label}  (${i+1}/${items.length})` : '🎬 Cut-in hidden');
-}
 function soloShow(m){
   const P = new URLSearchParams(location.search);
-  const fit = parseFloat(P.get('fit')) || 0.8, maxS = parseFloat(P.get('max')) || 2.5, anim = P.get('anim') || 'pop';
+  const el0 = m.id ? elById(m.id) : null, cut = (el0 && el0.cut) || {};
+  const pos = cut.pos || P.get('pos') || 'center';
+  const anim = cut.anim || P.get('anim') || 'pop';
+  const fit = cut.fit || parseFloat(P.get('fit')) || (pos === 'full' ? 0.96 : 0.8), maxS = parseFloat(P.get('max')) || 2.5;
   const layer = document.getElementById('soloLayer');
   if (_soloEl){
     const old = _soloEl; _soloEl = null;
@@ -4418,8 +4755,8 @@ function soloShow(m){
     if (old._pose) old._pose(false);
     setTimeout(() => old.remove(), 500);
   }
-  if (!m.id) return;
-  const el = elById(m.id); if (!el) return;
+  if (!m.id || !el0) return;
+  const el = el0;
   const wrap = document.createElement('div'); wrap.className = 'solo-wrap';
   let media = null;
   if (el.type === 'video'){ wrap.innerHTML = '<video playsinline></video>'; media = wrap.firstElementChild; media.src = toFileUrl(el.path); }
@@ -4427,6 +4764,7 @@ function soloShow(m){
     wrap.innerHTML = elHtml(el);
     if (el.type === 'sound'){ media = document.createElement('audio'); media.src = toFileUrl(el.path); wrap.appendChild(media); }
   }
+  if (cut.sfx){ try { const a = new Audio(toFileUrl(cut.sfx)); a.play().catch(() => {}); } catch(e){} }
   layer.appendChild(wrap); _soloEl = wrap;
   let s = 1;
   wrap._pose = on => {
@@ -4440,7 +4778,12 @@ function soloShow(m){
     const node = wrap.firstElementChild;
     if (node.tagName === 'VIDEO' && node.videoWidth){ node.style.width = node.videoWidth + 'px'; node.style.height = node.videoHeight + 'px'; }
     const w = node.offsetWidth, h = node.offsetHeight; if (!w || !h) return;
-    s = Math.min((innerWidth || 1920) * fit / w, (innerHeight || 1080) * fit / h, maxS);
+    const W = innerWidth || 1920, H = innerHeight || 1080;
+    let bw = W * fit, bh = H * fit, cx = W / 2, cy = H / 2;
+    if (pos === 'lower'){ bw = Math.min(bw, W * 0.6); bh = H * 0.3; cy = H - bh / 2 - H * 0.05; }
+    else if (pos === 'left' || pos === 'right'){ bw = W * 0.46; cx = W * (pos === 'left' ? 0.27 : 0.73); }
+    s = Math.min(bw / w, bh / h, maxS);
+    wrap.style.left = cx + 'px'; wrap.style.top = cy + 'px';
     if (!shown){ shown = true; wrap._pose(false); void wrap.offsetWidth; wrap._pose(true); }
     else wrap._pose(true);
   };
@@ -4448,17 +4791,19 @@ function soloShow(m){
   wrap.querySelectorAll('img').forEach(im => { if (!im.complete) im.addEventListener('load', fitNow); });
   if (media){
     media.addEventListener('loadedmetadata', fitNow);
-    media.play().catch(() => { media.muted = true; media.play().catch(()=>{}); });
+    media.play().catch(() => { media.muted = true; media.play().catch(() => {}); });
     if (P.get('autohide') !== '0') media.addEventListener('ended', () => { if (_soloEl === wrap) soloShow({ id: null }); });
   }
+  if (cut.auto && cut.dur > 0) setTimeout(() => { if (_soloEl === wrap) soloShow({ id: null }); }, cut.dur * 1000);
 }
 // OBS control dock — add via OBS: View > Docks > Custom Browser Docks > URL .../board.html?remote=1
-function rmCmd(a, n){ try { fetch('/obs-cmd?a=' + a + (n != null ? '&n=' + encodeURIComponent(n) : '')); } catch(e){} }
+function rmCmd(a, n){ try { fetch('/obs-cmd?a=' + a + (n != null ? '&n=' + encodeURIComponent(n) : '') + kq('&')); } catch(e){} }
 function rmRender(){
   const items = nvRundownItems();
   const cur = items.find(it => it.el.id === _rmCur);
   const now = document.getElementById('rmNow');
   now.textContent = cur ? '● LIVE ' + cur.label : 'Nothing on screen';
+  now.dataset.base = now.textContent;
   now.classList.toggle('live', !!cur);
   const icon = { text:'📝', quote:'❝', sticky:'🗒', image:'🖼', video:'🎬', pdf:'📄', sound:'🎵', link:'🔗' };
   document.getElementById('rmList').innerHTML = items.map(it => {
@@ -4472,12 +4817,384 @@ function setupRemoteView(){
   const ui = document.createElement('div'); ui.id = 'remoteUI';
   ui.innerHTML = `<span id="rmNow">Nothing on screen</span><div class="rm-btns"><button onclick="rmCmd('prev')">◀ Prev</button><button class="rm-go" onclick="rmCmd('next')">Next ▶</button><button class="rm-x" onclick="rmCmd('hide')">✕ Hide</button></div><div id="rmList"></div>`;
   document.body.appendChild(ui);
-  const es = new EventSource('/obs-events');
+  const es = new EventSource('/obs-events' + kq('?'));
   es.onmessage = ev => {
     let m; try { m = JSON.parse(ev.data); } catch(e){ return; }
     if (m.type === 'board'){ board.elements = m.elements || []; rmRender(); }
-    else if (m.type === 'show'){ _rmCur = m.id; rmRender(); }
+    else if (m.type === 'show'){ _rmCur = m.id; _rmTs = m.ts || Date.now(); _rmTarget = m.target || 0; rmRender(); }
   };
+  setInterval(() => { const n = document.getElementById('rmNow'); if (!n || !_rmCur) return; const sec = (Date.now() - _rmTs)/1000;
+    n.textContent = (n.dataset.base || '') + '  ·  ' + _fmtMS(sec*1000) + (_rmTarget ? ' / ' + _fmtMS(_rmTarget*1000) : ''); n.style.color = (_rmTarget && sec > _rmTarget) ? '#FF8A8A' : ''; }, 500);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// v1.12 — cut-in settings, session timeline, teleprompter, thumbnail frames,
+//          laser pointer, OBS connection panel, hotkeys, OBS Guide
+// ══════════════════════════════════════════════════════════════════════════════
+const _fmtMS = ms => { const s = Math.max(0, Math.round(ms/1000)); const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return (h ? h+':'+String(m).padStart(2,'0') : m)+':'+String(x).padStart(2,'0'); };
+function cutTitle(el){ return String(nvItemLabel(el) || '').replace(/\s+/g,' ').replace(/[*☐☑]/g,'').trim().slice(0,60); }
+function obsLink(kind){
+  const p = { solo:'/board.html?obs=1&mode=solo', mirror:'/board.html?obs=1', dock:'/board.html?remote=1', prompter:'/board.html?prompter=1' }[kind];
+  return location.origin + p + kq('&');
+}
+function copyObsKind(kind){ navigator.clipboard.writeText(obsLink(kind)); toast('Link copied ✓', true); }
+function fillGuideLinks(){ ['solo','mirror','dock'].forEach(k => { const n = document.getElementById('gdLink_'+k); if (n) n.textContent = obsLink(k); }); }
+
+// ── Per-asset cut-in settings ─────────────────────────────────────────────────
+let _cutEditId = null;
+function openCutEditor(id){
+  const el = elById(id); if (!el) return;
+  _cutEditId = id; const c = el.cut || {};
+  document.getElementById('cutEditLabel').textContent = (el.serial != null ? '#'+el.serial+' · ' : '') + cutTitle(el);
+  document.getElementById('cutPos').value = c.pos || '';
+  document.getElementById('cutAnim').value = c.anim || '';
+  document.getElementById('cutFit').value = c.fit || '';
+  document.getElementById('cutDur').value = c.dur || '';
+  document.getElementById('cutAuto').value = c.auto ? '1' : '';
+  document.getElementById('cutSfx').value = c.sfx || '';
+  document.getElementById('cutScene').value = c.scene || '';
+  document.getElementById('cutChapter').value = c.chapter || '';
+  document.getElementById('cutScenes').innerHTML = (obsSt.scenes||[]).map(s => `<option value="${esc(s)}">`).join('');
+  document.getElementById('cutEditBg').classList.add('show');
+}
+function closeCutEditor(){ document.getElementById('cutEditBg').classList.remove('show'); _cutEditId = null; }
+async function cutPickSfx(){
+  const r = await window.nabu.pickAssetFile({ extensions:['mp3','wav','ogg','m4a','flac'] });
+  if (r && r.success) document.getElementById('cutSfx').value = r.filePath;
+}
+function saveCutEditor(){
+  const el = elById(_cutEditId); if (!el){ closeCutEditor(); return; }
+  const v = id => document.getElementById(id).value.trim();
+  const c = {};
+  if (v('cutPos')) c.pos = v('cutPos');
+  if (v('cutAnim')) c.anim = v('cutAnim');
+  if (parseFloat(v('cutFit')) > 0) c.fit = Math.min(1, Math.max(0.1, parseFloat(v('cutFit'))));
+  if (parseFloat(v('cutDur')) > 0) c.dur = parseFloat(v('cutDur'));
+  if (c.dur && v('cutAuto') === '1') c.auto = true;
+  if (v('cutSfx')) c.sfx = v('cutSfx');
+  if (v('cutScene')) c.scene = v('cutScene');
+  if (v('cutChapter')) c.chapter = v('cutChapter');
+  pushHistory();
+  if (Object.keys(c).length) el.cut = c; else delete el.cut;
+  markDirty(); render(); obsPushBoard(); closeCutEditor(); toast('Cut-in settings saved');
+}
+
+// ── Cut-in controller (replaces the v1.11 basic version) ─────────────────────
+let cutT0 = null, cutLog = [];
+let obsSt = { connected:false, recording:false, scene:'', scenes:[], error:'' };
+let _prevScene = null;
+function obsPrefs(){ let p = {}; try { p = JSON.parse(localStorage.getItem('nabuObsPrefs') || '{}'); } catch(e){} return { autoChapter: p.autoChapter !== false, returnScene: p.returnScene !== false }; }
+function setObsPref(k, v){ const p = obsPrefs(); p[k] = v; try { localStorage.setItem('nabuObsPrefs', JSON.stringify(p)); } catch(e){} }
+function saveCutLog(){ try { localStorage.setItem('nabuCutLog', JSON.stringify({ t0: cutT0, at: Date.now(), log: cutLog })); } catch(e){} }
+function loadCutLog(){
+  try { const d = JSON.parse(localStorage.getItem('nabuCutLog') || 'null'); if (d && Date.now() - d.at < 12*3600e3){ cutT0 = d.t0; cutLog = d.log || []; } } catch(e){}
+}
+function resetCutLog(silent){
+  cutT0 = Date.now(); cutLog = []; saveCutLog(); if (!silent) toast('Timeline reset — 0:00 starts now'); if (document.getElementById('sessBg').classList.contains('show')) renderSession();
+}
+function logCut(it){
+  if (cutT0 == null) cutT0 = Date.now();
+  const t = Date.now() - cutT0, last = cutLog[cutLog.length-1];
+  if (last && last.end == null) last.end = t;
+  if (it){
+    const el = it.el, c = el.cut || {};
+    cutLog.push({ t, end:null, id:el.id, label:it.label, child:!!it.child, title:cutTitle(el), type:el.type,
+      file: el.name || (el.path ? el.path.split(/[\\/]/).pop() : ''), chapter:c.chapter||'', target:c.dur||0 });
+  }
+  saveCutLog(); if (document.getElementById('sessBg').classList.contains('show')) renderSession();
+}
+async function obsActions(it){
+  if (!obsSt.connected) return;
+  const el = it && it.el, c = (el && el.cut) || {}, pr = obsPrefs();
+  if (it && c.scene && c.scene !== obsSt.scene){
+    if (_prevScene == null) _prevScene = obsSt.scene;
+    window.nabu.obsRequest('SetCurrentProgramScene', { sceneName: c.scene });
+  } else if (!it && _prevScene != null && pr.returnScene){
+    window.nabu.obsRequest('SetCurrentProgramScene', { sceneName: _prevScene }); _prevScene = null;
+  }
+  if (it && obsSt.recording && pr.autoChapter)
+    window.nabu.obsRequest('CreateRecordChapter', { chapterName: (c.chapter || (it.label + ' ' + cutTitle(el))).slice(0, 80) });
+}
+function showCmd(c){
+  if (!c) return;
+  if (c.a === 'laser'){ toggleLaser(); return; }
+  const items = nvRundownItems();
+  if (!items.length){ toast('Nothing numbered to show yet — assets need serial numbers', true); return; }
+  let i = _showIdx;
+  if (c.a === 'next') i = (i + 1 >= items.length) ? -1 : i + 1;
+  else if (c.a === 'prev') i = i <= 0 ? 0 : i - 1;
+  else if (c.a === 'hide') i = -1;
+  else if (c.a === 'toggle') i = i >= 0 ? -1 : 0;
+  else if (c.a === 'goto'){
+    const k = items.findIndex(it => it.label === String(c.n));
+    if (k < 0){ toast('No asset numbered ' + c.n); return; }
+    i = k;
+  } else return;
+  _showIdx = i;
+  const it = items[i], cut = (it && it.el.cut) || {};
+  _liveId = it ? it.el.id : null;
+  markLive();
+  obsSend({ type:'show', id: _liveId, idx:i, total:items.length, label: it ? it.label : '', ts: Date.now(), target: cut.dur || 0 });
+  logCut(it); obsActions(it); updateCutHud();
+  toast(it ? `🎬 LIVE ${it.label}  (${i+1}/${items.length})` : '🎬 Cut-in hidden');
+}
+function updateCutHud(){
+  const h = document.getElementById('cutHud'); if (!h) return;
+  const last = cutLog[cutLog.length-1];
+  if (!_liveId || !last || last.end != null){ h.classList.remove('show'); return; }
+  const el = (cutT0 != null) ? Date.now() - cutT0 : 0, since = el - last.t;
+  const over = last.target && since/1000 > last.target;
+  h.className = 'cut-hud show' + (over ? ' over' : '');
+  h.textContent = `● LIVE ${last.label}  ·  ${_fmtMS(since)}${last.target ? ' / ' + _fmtMS(last.target*1000) : ''}  ·  ⏱ ${_fmtMS(el)}`;
+}
+setInterval(() => { if (!obsView && !notesView && !remoteView && !prompterView && !exportMode) updateCutHud(); }, 500);
+
+// ── Session timeline: log / plan → chapters, EDL, CSV ────────────────────────
+let _sessMode = 'log';
+function buildTimeline(mode){
+  if (mode === 'plan'){
+    let t = 0;
+    return nvRundownItems().map(it => {
+      const c = it.el.cut || {}, d = (c.dur || (it.el.type === 'video' ? 30 : 12)) * 1000;
+      const e = { start:t, end:t+d, label:it.label, child:it.child, title:cutTitle(it.el), type:it.el.type,
+        file: it.el.name || (it.el.path ? it.el.path.split(/[\\/]/).pop() : ''), chapter:c.chapter||'', target:c.dur||0 };
+      t += d; return e;
+    });
+  }
+  const now = cutT0 != null ? Date.now() - cutT0 : 0;
+  return cutLog.map(e => ({ start:e.t, end: e.end != null ? e.end : Math.max(now, e.t+1000), label:e.label, child:e.child, title:e.title,
+    type:e.type, file:e.file, chapter:e.chapter, target:e.target }));
+}
+function buildChapters(tl){
+  const list = [];
+  tl.forEach(e => { if (!e.child && (e.chapter || e.end - e.start >= 10000)) list.push({ t:e.start, name:e.chapter || e.title || ('Part '+e.label) }); });
+  if (!list.length || list[0].t > 0) list.unshift({ t:0, name:'Intro' });
+  return list.filter((c, i, a) => i === 0 || c.t - a[i-1].t >= 10000 || c.name !== a[i-1].name);
+}
+function chaptersText(tl){ return buildChapters(tl).map(c => _fmtMS(c.t) + ' ' + c.name).join('\n'); }
+function tcOf(ms, fps){ const f = Math.round(ms/1000*fps), ff = f % fps, s = Math.floor(f/fps); const p = n => String(n).padStart(2,'0');
+  return `${p(Math.floor(s/3600))}:${p(Math.floor(s%3600/60))}:${p(s%60)}:${p(ff)}`; }
+function edlText(tl, fps){
+  let n = 0; const out = [`TITLE: ${board.title || 'NabuBrainstorm'}`, 'FCM: NON-DROP FRAME', ''];
+  tl.forEach(e => {
+    if (!['image','video','sound'].includes(e.type)) return;
+    n++; const dur = e.end - e.start, tr = e.type === 'sound' ? 'A' : 'V';
+    out.push(`${String(n).padStart(3,'0')}  AX       ${tr}     C        ${tcOf(0,fps)} ${tcOf(dur,fps)} ${tcOf(e.start,fps)} ${tcOf(e.end,fps)}`);
+    out.push(`* FROM CLIP NAME: ${e.file || e.title}`);
+    out.push(`* COMMENT: ${e.label} ${e.title}`, '');
+  });
+  return out.join('\r\n');
+}
+function csvText(tl){
+  const q = v => '"' + String(v ?? '').replace(/"/g,'""') + '"';
+  return ['label,title,type,file,start,end,duration_s,target_s'].concat(tl.map(e =>
+    [e.label, e.title, e.type, e.file, _fmtMS(e.start), _fmtMS(e.end), ((e.end-e.start)/1000).toFixed(1), e.target||''].map(q).join(','))).join('\r\n');
+}
+function openSession(){ renderSession(); document.getElementById('sessBg').classList.add('show'); }
+function closeSession(){ document.getElementById('sessBg').classList.remove('show'); }
+function setSessMode(m){ _sessMode = m; renderSession(); }
+function renderSession(){
+  const tl = buildTimeline(_sessMode);
+  document.getElementById('sessModeLog').classList.toggle('on', _sessMode === 'log');
+  document.getElementById('sessModePlan').classList.toggle('on', _sessMode === 'plan');
+  document.getElementById('sessNote').textContent = _sessMode === 'log'
+    ? 'Recorded from your real cut-ins this session (time 0:00 = recording start, or your first cut-in).'
+    : 'Planned from your numbering order using each asset\'s target seconds (default 12s, video 30s).';
+  const total = tl.length ? tl[tl.length-1].end : 0;
+  document.getElementById('sessRows').innerHTML = tl.length ? tl.map(e => {
+    const d = e.end - e.start, over = e.target && d/1000 > e.target;
+    return `<tr class="${e.child?'child':''}"><td class="n">${e.label}</td><td>${_fmtMS(e.start)}</td><td>${esc(e.title)}</td><td>${e.type}</td><td class="${over?'over':''}">${(d/1000).toFixed(0)}s${e.target?' / '+e.target+'s':''}</td></tr>`;
+  }).join('') : '<tr><td colspan="5" style="color:#777;padding:16px">Nothing yet — trigger some cut-ins (Ctrl+Alt+→), or switch to Plan.</td></tr>';
+  document.getElementById('sessTotal').textContent = tl.length ? `Total ${_fmtMS(total)} · ${tl.length} cut-ins` : '';
+}
+async function sessSave(kind){
+  const tl = buildTimeline(_sessMode); if (!tl.length){ toast('Nothing to export'); return; }
+  const safe = (board.title || 'board').replace(/[^\w\s-]/g,'').trim().replace(/\s+/g,'_') || 'board';
+  const fps = parseInt(document.getElementById('sessFps').value, 10) || 30;
+  const f = { edl:[`${safe}_cutins.edl`, edlText(tl, fps)], csv:[`${safe}_cutins.csv`, csvText(tl)], chapters:[`${safe}_chapters.txt`, chaptersText(tl)] }[kind];
+  const r = await window.nabu.saveTextFile({ defaultName:f[0], content:f[1] });
+  if (r && r.success) toast('Saved ✓');
+}
+function sessCopyChapters(){
+  const tl = buildTimeline(_sessMode); if (!tl.length){ toast('Nothing to copy'); return; }
+  navigator.clipboard.writeText(chaptersText(tl));
+  const n = buildChapters(tl).length;
+  toast(n < 3 ? 'Chapters copied — note: YouTube needs at least 3 chapters' : `${n} chapters copied — paste into your video description ✓`);
+}
+
+// ── OBS connection panel + hotkeys ───────────────────────────────────────────
+function updateObsUi(){
+  const b = document.getElementById('obsBtn'); if (b) b.classList.toggle('live', obsSt.connected);
+  const st = document.getElementById('obsStatus'); if (!st) return;
+  st.innerHTML = obsSt.connected
+    ? `<span class="dot ok"></span> Connected · scene <b>${esc(obsSt.scene||'?')}</b> · ${obsSt.recording ? '<span style="color:#E63946">● recording</span>' : 'not recording'}`
+    : `<span class="dot"></span> Not connected${obsSt.error ? ' — ' + esc(obsSt.error) : ''}`;
+  const sc = document.getElementById('cutScenes'); if (sc) sc.innerHTML = (obsSt.scenes||[]).map(s => `<option value="${esc(s)}">`).join('');
+}
+async function openObsPanel(){
+  document.getElementById('obsBg').classList.add('show');
+  const [s, hk] = await Promise.all([window.nabu.obsGetSettings(), window.nabu.getHotkeys()]);
+  document.getElementById('obsHost').value = s.host; document.getElementById('obsPort').value = s.port;
+  document.getElementById('obsAuto').checked = !!s.autoConnect;
+  document.getElementById('obsRemember').checked = !!s.hasPassword; document.getElementById('obsRemember').disabled = !s.canStorePassword;
+  document.getElementById('obsPwd').placeholder = s.hasPassword ? '(saved — leave blank to reuse)' : 'WebSocket password';
+  obsSt = s.status; updateObsUi();
+  const pr = obsPrefs(); document.getElementById('obsAutoChap').checked = pr.autoChapter; document.getElementById('obsRetScene').checked = pr.returnScene;
+  ['next','prev','hide','laser'].forEach(a => { const i = document.getElementById('hk_'+a); i.value = hk.hotkeys[a]; i.classList.toggle('bad', hk.status[a] === false); });
+  fillGuideLinks();
+  ['solo','mirror','dock','prompter'].forEach(k => { const n = document.getElementById('obsLink_'+k); if (n) n.textContent = obsLink(k); });
+}
+function closeObsPanel(){ document.getElementById('obsBg').classList.remove('show'); }
+async function obsConnectClick(){
+  const st = document.getElementById('obsStatus'); st.textContent = 'Connecting…';
+  const r = await window.nabu.obsConnect({ host: document.getElementById('obsHost').value.trim(), port: document.getElementById('obsPort').value,
+    password: document.getElementById('obsPwd').value, remember: document.getElementById('obsRemember').checked, autoConnect: document.getElementById('obsAuto').checked });
+  if (!r.success){ obsSt.error = r.error || 'Failed'; obsSt.connected = false; }
+  updateObsUi();
+}
+async function obsRec(start){
+  const r = await window.nabu.obsRequest(start ? 'StartRecord' : 'StopRecord');
+  if (!r.success) toast('OBS: ' + r.error);
+}
+function accelFromEvent(e){
+  const k = e.key; if (['Control','Shift','Alt','Meta'].includes(k)) return '';
+  const map = { ArrowRight:'Right', ArrowLeft:'Left', ArrowUp:'Up', ArrowDown:'Down', ' ':'Space', Escape:'Esc' };
+  const key = map[k] || (k.length === 1 ? k.toUpperCase() : k);
+  const mods = []; if (e.ctrlKey || e.metaKey) mods.push('CommandOrControl'); if (e.altKey) mods.push('Alt'); if (e.shiftKey) mods.push('Shift');
+  if (!mods.length) return '';
+  return mods.concat(key).join('+');
+}
+function hkKey(e, a){ e.preventDefault(); const acc = accelFromEvent(e); if (acc) document.getElementById('hk_'+a).value = acc; }
+async function saveHotkeys(){
+  const hk = {}; ['next','prev','hide','laser'].forEach(a => { hk[a] = document.getElementById('hk_'+a).value.trim(); });
+  const r = await window.nabu.setHotkeys(hk);
+  let bad = 0; ['next','prev','hide','laser'].forEach(a => { const ok = r.status[a]; document.getElementById('hk_'+a).classList.toggle('bad', ok === false); if (ok === false) bad++; });
+  toast(bad ? bad + ' shortcut(s) could not be registered — probably used by another app' : 'Shortcuts saved ✓');
+}
+async function resetHotkeys(){ const hk = await window.nabu.getHotkeys(); ['next','prev','hide','laser'].forEach(a => { document.getElementById('hk_'+a).value = hk.defaults[a]; }); saveHotkeys(); }
+
+// ── Laser pointer (mirror overlay only) ──────────────────────────────────────
+let laserOn = false, _laserT = 0;
+function toggleLaser(){
+  laserOn = !laserOn; document.body.classList.toggle('laser-on', laserOn);
+  const b = document.getElementById('laserBtn'); if (b) b.classList.toggle('live', laserOn);
+  if (!laserOn) obsSend({ type:'laser', on:false });
+  toast(laserOn ? '🔴 Laser ON — move over the board; click to ping. Shows on the Mirror overlay source.' : 'Laser off');
+}
+function laserSend(e, ping){
+  const r = document.getElementById('viewport').getBoundingClientRect();
+  obsSend({ type:'laser', on:true, cx:(e.clientX - r.left - vpX)/vpZ, cy:(e.clientY - r.top - vpY)/vpZ, ping: !!ping });
+}
+let _laserLast = null, _laserHideT = null;
+function placeLaser(){
+  const d = document.getElementById('laserDot'); if (!d || !_laserLast) return;
+  d.style.left = (vpX + _laserLast.cx*vpZ) + 'px'; d.style.top = (vpY + _laserLast.cy*vpZ) + 'px'; d.style.display = 'block';
+}
+function laserApply(m){
+  let d = document.getElementById('laserDot');
+  if (!d){ d = document.createElement('div'); d.id = 'laserDot'; document.getElementById('viewport').appendChild(d); }
+  clearTimeout(_laserHideT);
+  if (!m.on){ d.style.display = 'none'; _laserLast = null; return; }
+  _laserLast = { cx:m.cx, cy:m.cy }; placeLaser();
+  if (m.ping){ const r = document.createElement('div'); r.className = 'laser-ping'; r.style.left = d.style.left; r.style.top = d.style.top;
+    document.getElementById('viewport').appendChild(r); setTimeout(() => r.remove(), 700); }
+  _laserHideT = setTimeout(() => { d.style.display = 'none'; }, 4000);
+}
+
+// ── Thumbnail frames (YouTube 16:9) ──────────────────────────────────────────
+function insertFrame(){
+  const vp2 = document.getElementById('viewport');
+  const cx = (vp2.clientWidth/2 - vpX)/vpZ, cy = (vp2.clientHeight/2 - vpY)/vpZ;
+  const n = board.elements.filter(e => e.type === 'frame').length;
+  pushHistory();
+  const el = { id:uid(), type:'frame', x:Math.round(cx-320), y:Math.round(cy-180), w:640, h:360, name:'Thumbnail ' + String.fromCharCode(65 + n%26), bg:'#1A1A1A' };
+  board.elements.push(el); render(); selectEl(el.id); markDirty(); spawnAnim(el.id);
+  toast('Thumbnail frame added — arrange your image + text inside, right-click → Export');
+}
+function dupFrame(id){
+  const f = elById(id); if (!f) return;
+  const n = board.elements.filter(e => e.type === 'frame').length;
+  pushHistory();
+  const c = { ...f, id:uid(), x:f.x + f.w + 40, name:'Thumbnail ' + String.fromCharCode(65 + n%26) };
+  board.elements.push(c); render(); markDirty(); spawnAnim(c.id); toast('Variant ' + c.name + ' created — copy items into it to A/B test');
+}
+async function setFrameBg(id){
+  const f = elById(id); if (!f) return;
+  const v = await prompt2('Frame background color (hex, e.g. #1A1A1A)', f.bg || '#1A1A1A');
+  if (v && /^#[0-9a-fA-F]{6}$/.test(v.trim())){ pushHistory(); f.bg = v.trim(); render(); markDirty(); } else if (v) toast('Use a 6-digit hex like #1A1A1A');
+}
+async function exportFrame(id, fmt){
+  const f = elById(id); if (!f) return;
+  const outW = 1280, zoom = outW / f.w, outH = Math.max(1, Math.round(f.h * zoom));
+  toast('Exporting thumbnail…');
+  const r = await window.nabu.exportPngAdvanced({
+    title: f.name || 'thumbnail', board: { ...board, elements: board.elements.filter(e => e.type !== 'frame'), connectors: [] },
+    transparent:false, bgColor:f.bg || '#1A1A1A', showSerials:false, format:fmt, webpQuality:0.92,
+    stitch:true, stitchHeight:outH, zoom, originX:f.x, originY:f.y, pad:0, frameW:outW, frameH:outH, tileCount:1 });
+  if (r && r.success) toast('Thumbnail saved ✓' + (fmt === 'png' ? ' (YouTube limit is 2 MB — use JPG if it is larger)' : ''));
+  else if (r && r.error) toast('Export failed: ' + r.error);
+}
+
+// ── Teleprompter (?prompter=1) ───────────────────────────────────────────────
+let _pm = { cur:null, focus:null, ts:0, target:0 };
+function pmPrefs(){ let p = {}; try { p = JSON.parse(localStorage.getItem('nabuPrompterPrefs') || '{}'); } catch(e){} return { size:p.size||44, mirror:!!p.mirror, speed:p.speed||0 }; }
+function pmSave(p){ try { localStorage.setItem('nabuPrompterPrefs', JSON.stringify(p)); } catch(e){} }
+function pmApply(){
+  const p = pmPrefs(); const t = document.getElementById('pmText');
+  t.style.fontSize = p.size + 'px'; document.getElementById('pmBody').style.transform = p.mirror ? 'scaleX(-1)' : '';
+  document.getElementById('pmSpeed').value = p.speed;
+}
+function pmBump(d){ const p = pmPrefs(); p.size = Math.min(140, Math.max(18, p.size + d)); pmSave(p); pmApply(); }
+function pmMirror(){ const p = pmPrefs(); p.mirror = !p.mirror; pmSave(p); pmApply(); }
+function pmSpeed(v){ const p = pmPrefs(); p.speed = parseInt(v, 10) || 0; pmSave(p); }
+function pmRender(){
+  const items = nvRundownItems(), id = _pm.cur || _pm.focus;
+  const i = items.findIndex(it => it.el.id === id), it = items[i];
+  const head = document.getElementById('pmHead'), txt = document.getElementById('pmText'), nxt = document.getElementById('pmNext');
+  if (!it){ head.textContent = 'Waiting…'; txt.textContent = 'Select an asset in the app, or press Next (Ctrl+Alt+→) to go live.'; nxt.textContent = ''; return; }
+  head.innerHTML = (_pm.cur ? '<span style="color:#E63946">● LIVE</span> ' : '') + esc(it.label) + ' · ' + esc(cutTitle(it.el));
+  const body = (it.el.notes || '').trim() || (it.el.text || it.el.name || it.el.url || '');
+  if (txt.dataset.id !== it.el.id || txt.textContent !== body){ txt.textContent = body; if (txt.dataset.id !== it.el.id) document.getElementById('pmBody').scrollTop = 0; txt.dataset.id = it.el.id; }
+  const n = items[i+1]; nxt.textContent = n ? 'NEXT ' + n.label + ' · ' + cutTitle(n.el) : 'END';
+}
+function setupPrompterView(){
+  document.body.classList.add('prompter-view');
+  board = { title:'', elements:[], connectors:[] };
+  const ui = document.createElement('div'); ui.id = 'prompterUI';
+  ui.innerHTML = `<div id="pmBar"><span id="pmHead"></span><span id="pmTimer"></span><span class="pm-sp"></span>
+    <button onclick="pmBump(-4)">A−</button><button onclick="pmBump(4)">A+</button><button onclick="pmMirror()" title="Mirror text (for beam-splitter prompters)">⇋</button>
+    <label title="Auto-scroll speed">⏬ <input type="range" id="pmSpeed" min="0" max="12" value="0" oninput="pmSpeed(this.value)"></label></div>
+    <div id="pmBody"><div id="pmText"></div></div><div id="pmNext"></div>`;
+  document.body.appendChild(ui);
+  pmApply();
+  const es = new EventSource('/obs-events' + kq('?'));
+  es.onmessage = ev => {
+    let m; try { m = JSON.parse(ev.data); } catch(e){ return; }
+    if (m.type === 'board'){ board.elements = m.elements || []; pmRender(); }
+    else if (m.type === 'show'){ _pm.cur = m.id; _pm.ts = m.ts || Date.now(); _pm.target = m.target || 0; pmRender(); }
+    else if (m.type === 'focus'){ _pm.focus = m.id; pmRender(); }
+  };
+  setInterval(() => { const b = document.getElementById('pmBody'), s = pmPrefs().speed; if (s) b.scrollTop += s * 0.5; }, 33);
+  setInterval(() => { const t = document.getElementById('pmTimer'); if (!_pm.cur){ t.textContent = ''; return; }
+    const sec = (Date.now() - _pm.ts)/1000; t.textContent = _fmtMS(sec*1000) + (_pm.target ? ' / ' + _fmtMS(_pm.target*1000) : ''); t.className = (_pm.target && sec > _pm.target) ? 'over' : ''; }, 500);
+}
+function openPrompter(){ window.nabu.openPrompterWindow(); }
+
+// ── Help: OBS Guide tab ──────────────────────────────────────────────────────
+function openGuide(){ openShortcuts(); helpTab('gd'); fillGuideLinks(); }
+document.getElementById('viewport').addEventListener('mousemove', e => { if (!laserOn) return; const n = performance.now(); if (n - _laserT < 40) return; _laserT = n; laserSend(e, false); });
+document.getElementById('viewport').addEventListener('mousedown', e => { if (laserOn) laserSend(e, true); });
+if (!obsView && !notesView && !remoteView && !prompterView && !exportMode){
+  loadCutLog();
+  if (window.nabu && window.nabu.onObsStatus){
+    window.nabu.onObsStatus(s => {
+      const wasRec = obsSt.recording; obsSt = s;
+      if (s.recording && !wasRec){ resetCutLog(true); toast('● OBS recording started — timeline reset to 0:00', true); }
+      if (!s.recording && wasRec){ logCut(null); toast('■ OBS recording stopped'); }
+      updateObsUi();
+    });
+    window.nabu.obsGetSettings().then(s => { obsSt = s.status; updateObsUi(); }).catch(() => {});
+  }
 }
 </script>
 </body>

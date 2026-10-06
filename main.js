@@ -1,4 +1,5 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, globalShortcut } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, globalShortcut, safeStorage, nativeImage } = require('electron');
+const crypto = require('crypto');
 const path = require('path');
 const fs   = require('fs');
 const https = require('https');
@@ -33,6 +34,21 @@ function writeConfig(data){
   try { fs.writeFileSync(CONFIG_PATH(), JSON.stringify(data, null, 2), 'utf8'); } catch{}
 }
 
+// ── Session security ──────────────────────────────────────────────────────────
+// A persistent random token guards the OBS/control routes (/obs-events, /obs-state,
+// /obs-cmd, /media) so a random web page or process can't drive the overlay or read
+// files. It is part of every overlay/dock URL you copy from the Help panel. The Host
+// header check also blocks DNS-rebinding. Persistent so OBS URLs survive restarts.
+let _token = null;
+function getToken(){
+  if (_token) return _token;
+  const cfg = readConfig();
+  if (!cfg.token){ cfg.token = crypto.randomBytes(12).toString('hex'); writeConfig(cfg); }
+  return (_token = cfg.token);
+}
+function hostOk(req){ return /^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/i.test(req.headers.host || ''); }
+function originOk(req){ const o = req.headers.origin; return !o || /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(o); }
+
 // ── Save folder paths ─────────────────────────────────────────────────────────
 const DEFAULT_BASE = () => path.join(app.getPath('documents'), 'NabuBrainstorm');
 const BASE_DIR  = () => { const cfg = readConfig(); return cfg.customSaveDir || DEFAULT_BASE(); };
@@ -40,6 +56,62 @@ const AUTO_DIR  = () => path.join(BASE_DIR(), 'Autosaves');
 const SAVED_DIR = () => path.join(BASE_DIR(), 'Saved');
 function ensureDirs(){
   [BASE_DIR(), AUTO_DIR(), SAVED_DIR()].forEach(d => { if(!fs.existsSync(d)) fs.mkdirSync(d,{recursive:true}); });
+}
+
+// ── External image assets ─────────────────────────────────────────────────────
+// Images are base64 data URLs in memory, but saved to disk as small files in
+// <save folder>\Assets\<sha1>.<ext> (content-addressed, so 30 autosaves share one copy)
+// and referenced from the .brb as "asset:<name>". Opening a board inlines them again.
+// "Save As…" keeps images embedded so that file stays portable on its own.
+const ASSET_DIR = () => path.join(BASE_DIR(), 'Assets');
+const IMG_MIME_EXT = { 'image/jpeg':'jpg', 'image/jpg':'jpg', 'image/png':'png', 'image/webp':'webp', 'image/gif':'gif', 'image/bmp':'bmp' };
+const EXT_IMG_MIME = { jpg:'image/jpeg', png:'image/png', webp:'image/webp', gif:'image/gif', bmp:'image/bmp' };
+function externalize(data){
+  try {
+    if (!data || !Array.isArray(data.elements)) return data;
+    const dir = ASSET_DIR(); if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    return { ...data, elements: data.elements.map(el => {
+      const m = el && typeof el.src === 'string' && /^data:(image\/[\w+.-]+);base64,/.exec(el.src);
+      if (!m || !IMG_MIME_EXT[m[1]]) return el;
+      const buf = Buffer.from(el.src.slice(m[0].length), 'base64');
+      const name = crypto.createHash('sha1').update(buf).digest('hex') + '.' + IMG_MIME_EXT[m[1]];
+      const fp = path.join(dir, name);
+      if (!fs.existsSync(fp)) fs.writeFileSync(fp, buf);
+      return { ...el, src: 'asset:' + name };
+    }) };
+  } catch(e){ return data; }   // on any failure fall back to embedding — never lose images
+}
+const MISSING_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180"><rect width="300" height="180" fill="#2a2a2a"/><text x="150" y="95" fill="#999" font-size="14" text-anchor="middle" font-family="sans-serif">image file missing</text></svg>');
+function internalize(data){
+  try {
+    if (!data || !Array.isArray(data.elements)) return data;
+    data.elements.forEach(el => {
+      if (!el || typeof el.src !== 'string' || !el.src.startsWith('asset:')) return;
+      const name = path.basename(el.src.slice(6));
+      try {
+        const buf = fs.readFileSync(path.join(ASSET_DIR(), name));
+        el.src = `data:${EXT_IMG_MIME[path.extname(name).slice(1)] || 'image/jpeg'};base64,${buf.toString('base64')}`;
+      } catch(e){ el.src = MISSING_IMG; }
+    });
+  } catch(e){}
+  return data;
+}
+// Delete asset files no remaining .brb references (older than 10 min so a save in flight is safe)
+function pruneAssets(){
+  try {
+    const dir = ASSET_DIR(); if (!fs.existsSync(dir)) return;
+    const used = new Set();
+    [AUTO_DIR(), SAVED_DIR()].forEach(d => { try {
+      fs.readdirSync(d).filter(f => f.endsWith('.brb')).forEach(f => {
+        const txt = fs.readFileSync(path.join(d, f), 'utf8');
+        (txt.match(/asset:[0-9a-f]{40}\.\w+/g) || []).forEach(a => used.add(a.slice(6)));
+      });
+    } catch(e){} });
+    fs.readdirSync(dir).forEach(f => {
+      const fp = path.join(dir, f);
+      if (!used.has(f) && Date.now() - fs.statSync(fp).mtimeMs > 600000) { try { fs.unlinkSync(fp); } catch(e){} }
+    });
+  } catch(e){}
 }
 
 // Make a safe timestamp string
@@ -77,7 +149,12 @@ const SERVE_MIME = {
 let obsClients = [];
 const obsLast = {};   // last message per type, replayed to newly connected overlays
 
+const MEDIA_EXT = new Set(['.png','.jpg','.jpeg','.gif','.webp','.svg','.mp4','.webm','.mov','.mkv','.mp3','.wav','.m4a','.ogg','.flac','.pdf']);
 function handleObsRoutes(req, res, urlPath){
+  if (['/obs-events','/obs-state','/obs-cmd','/media'].includes(urlPath)){
+    const q = new URL(req.url, 'http://x').searchParams;
+    if (q.get('k') !== getToken() || !originOk(req)){ res.writeHead(403); res.end(); return true; }
+  }
   if (urlPath === '/obs-events'){
     res.writeHead(200, { 'Content-Type':'text/event-stream', 'Cache-Control':'no-cache', 'Connection':'keep-alive' });
     res.write(':ok\n\n');
@@ -106,14 +183,25 @@ function handleObsRoutes(req, res, urlPath){
     return true;
   }
   if (urlPath === '/media'){
-    // Streams a local media file so the OBS overlay (which cannot use file://
-    // URLs) can show video/sound/pdf assets. Server is bound to 127.0.0.1 only.
+    // Streams a local media file (with Range support so video can seek) for the OBS
+    // overlay, which cannot use file:// URLs. Media extensions only; token-guarded.
     const p = new URL(req.url, 'http://x').searchParams.get('p') || '';
-    const stream = fs.createReadStream(p);
-    stream.on('error', () => { res.writeHead(404); res.end(); });
-    stream.once('open', () => {
-      res.writeHead(200, { 'Content-Type': SERVE_MIME[path.extname(p).toLowerCase()] || 'application/octet-stream' });
-      stream.pipe(res);
+    const ext = path.extname(p).toLowerCase();
+    if (!MEDIA_EXT.has(ext)){ res.writeHead(403); res.end(); return true; }
+    fs.stat(p, (err, st) => {
+      if (err || !st.isFile()){ res.writeHead(404); res.end(); return; }
+      const type = SERVE_MIME[ext] || 'application/octet-stream';
+      const m = /bytes=(\d*)-(\d*)/.exec(req.headers.range || '');
+      if (m){
+        const start = m[1] ? parseInt(m[1], 10) : 0;
+        const end = m[2] ? Math.min(parseInt(m[2], 10), st.size - 1) : st.size - 1;
+        if (start > end || start >= st.size){ res.writeHead(416, { 'Content-Range': `bytes */${st.size}` }); res.end(); return; }
+        res.writeHead(206, { 'Content-Type': type, 'Accept-Ranges': 'bytes', 'Content-Range': `bytes ${start}-${end}/${st.size}`, 'Content-Length': end - start + 1 });
+        fs.createReadStream(p, { start, end }).on('error', () => res.destroy()).pipe(res);
+      } else {
+        res.writeHead(200, { 'Content-Type': type, 'Accept-Ranges': 'bytes', 'Content-Length': st.size });
+        fs.createReadStream(p).on('error', () => res.destroy()).pipe(res);
+      }
     });
     return true;
   }
@@ -123,6 +211,7 @@ function handleObsRoutes(req, res, urlPath){
 function startLocalServer() {
   return new Promise(resolve => {
     const srv = http.createServer((req, res) => {
+      if (!hostOk(req)){ res.writeHead(403); res.end(); return; }
       let urlPath = req.url.split('?')[0];
       if (handleObsRoutes(req, res, urlPath)) return;
       if (urlPath === '/') urlPath = '/board.html';
@@ -145,11 +234,27 @@ function startLocalServer() {
 }
 
 function sendShowCmd(cmd){ if (win && !win.isDestroyed()) win.webContents.send('show-cmd', cmd); }
-// Global hotkeys work even while OBS (or any other app) has focus.
+// Global hotkeys work even while OBS (or any other app) has focus. Rebindable in the
+// Help → OBS Guide → Settings panel; stored in nabu-config.json.
+const DEFAULT_HOTKEYS = { next:'CommandOrControl+Alt+Right', prev:'CommandOrControl+Alt+Left', hide:'CommandOrControl+Alt+Down', laser:'CommandOrControl+Alt+L' };
+let hotkeyStatus = {};
+function currentHotkeys(){ return { ...DEFAULT_HOTKEYS, ...(readConfig().hotkeys || {}) }; }
 function registerShowHotkeys(){
-  const keys = { 'CommandOrControl+Alt+Right':'next', 'CommandOrControl+Alt+Left':'prev', 'CommandOrControl+Alt+Down':'hide' };
-  Object.entries(keys).forEach(([k, a]) => { try { globalShortcut.register(k, () => sendShowCmd({ a })); } catch(e){} });
+  globalShortcut.unregisterAll();
+  hotkeyStatus = {};
+  Object.entries(currentHotkeys()).forEach(([a, acc]) => {
+    try { hotkeyStatus[a] = !!acc && globalShortcut.register(acc, () => sendShowCmd({ a })); }
+    catch(e){ hotkeyStatus[a] = false; }
+  });
+  return hotkeyStatus;
 }
+ipcMain.handle('get-hotkeys', () => ({ hotkeys: currentHotkeys(), defaults: DEFAULT_HOTKEYS, status: hotkeyStatus }));
+ipcMain.handle('set-hotkeys', (_, hk) => {
+  const clean = {};
+  Object.keys(DEFAULT_HOTKEYS).forEach(a => { if (hk && typeof hk[a] === 'string') clean[a] = hk[a].trim(); });
+  const cfg = readConfig(); cfg.hotkeys = clean; writeConfig(cfg);
+  return { hotkeys: currentHotkeys(), status: registerShowHotkeys() };
+});
 app.on('will-quit', () => globalShortcut.unregisterAll());
 
 let serverPort = null;
@@ -171,7 +276,7 @@ async function createWindow() {
       webviewTag: true      // needed for Instagram/social embeds in Quick Look
     }
   });
-  win.loadURL(`http://127.0.0.1:${port}/board.html`);
+  win.loadURL(`http://127.0.0.1:${port}/board.html?k=${getToken()}`);
   win.on('enter-full-screen', () => win.webContents.send('fullscreen', true));
   win.on('leave-full-screen', () => win.webContents.send('fullscreen', false));
 }
@@ -200,7 +305,7 @@ ipcMain.handle('open-notes-window', () => {
   // keep it fixed so this window is always distinguishable by name from the board
   // window in OBS's Window Capture source list (that's the whole point of this window).
   notesWin.on('page-title-updated', e => e.preventDefault());
-  notesWin.loadURL(`http://127.0.0.1:${serverPort}/board.html?notes=1`);
+  notesWin.loadURL(`http://127.0.0.1:${serverPort}/board.html?notes=1&k=${getToken()}`);
   notesWin.on('closed', () => { notesWin = null; });
   return true;
 });
@@ -234,8 +339,8 @@ ipcMain.handle('board-save-auto', async (_, { data }) => {
     const safe = (data.title || 'Board').replace(/[^\w\s-]/g,'').trim().replace(/\s+/g,'_') || 'Board';
     const fname = `${safe}_${timestamp()}_autosave.brb`;
     const fpath = path.join(AUTO_DIR(), fname);
-    fs.writeFileSync(fpath, JSON.stringify(data, null, 2), 'utf8');
-    enforceCap(AUTO_DIR(), 30);
+    fs.writeFileSync(fpath, JSON.stringify(externalize(data), null, 2), 'utf8');
+    enforceCap(AUTO_DIR(), 30); pruneAssets();
     return { success: true, filePath: fpath };
   } catch(err){ return { success: false, error: err.message }; }
 });
@@ -247,8 +352,8 @@ ipcMain.handle('board-save-user', async (_, { data }) => {
     const safe = (data.title || 'Board').replace(/[^\w\s-]/g,'').trim().replace(/\s+/g,'_') || 'Board';
     const fname = `${safe}_${timestamp()}.brb`;
     const fpath = path.join(SAVED_DIR(), fname);
-    fs.writeFileSync(fpath, JSON.stringify(data, null, 2), 'utf8');
-    enforceCap(SAVED_DIR(), 10);
+    fs.writeFileSync(fpath, JSON.stringify(externalize(data), null, 2), 'utf8');
+    enforceCap(SAVED_DIR(), 10); pruneAssets();
     const cfg = readConfig(); cfg.lastSavedFile = fpath; writeConfig(cfg);
     return { success: true, filePath: fpath };
   } catch(err){ return { success: false, error: err.message }; }
@@ -274,7 +379,7 @@ ipcMain.handle('board-save-as', async (_, { data, title }) => {
 ipcMain.handle('board-save', async (_, { filePath, data }) => {
   try {
     if (!filePath) return { success: false };
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+    fs.writeFileSync(filePath, JSON.stringify(externalize(data), null, 2), 'utf8');
     return { success: true, filePath };
   } catch(err){ return { success: false, error: err.message }; }
 });
@@ -291,7 +396,7 @@ ipcMain.handle('board-open', async (_, filePath) => {
       if (res.canceled || !res.filePaths.length) return { success: false };
       filePath = res.filePaths[0];
     }
-    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const data = internalize(JSON.parse(fs.readFileSync(filePath, 'utf8')));
     const cfg = readConfig(); cfg.lastOpenedFile = filePath; writeConfig(cfg);
     return { success: true, filePath, data };
   } catch(err){ return { success: false, error: err.message }; }
@@ -490,7 +595,7 @@ async function stitchChunks(exportWin, buffers, frameW, chunkH, totalH, format, 
 ipcMain.handle('export-png-advanced', async (_, payload) => {
   const { title, board, transparent, bgColor, showSerials, format, webpQuality, stitch, stitchHeight,
           zoom, originX, originY, pad, frameW, frameH, tileCount } = payload;
-  const ext = format === 'webp' ? 'webp' : 'png';
+  const ext = format === 'webp' ? 'webp' : format === 'jpg' ? 'jpg' : 'png';
   let exportWin;
   try {
     exportWin = new BrowserWindow({
@@ -542,6 +647,7 @@ ipcMain.handle('export-png-advanced', async (_, payload) => {
         : buffers;
     }
 
+    if (format === 'jpg') finalBuffers = finalBuffers.map(b => nativeImage.createFromBuffer(b).toJPEG(92));
     if (finalBuffers.length === 1) {
       const res = await dialog.showSaveDialog(win, {
         title: 'Export Board as Image',
@@ -599,11 +705,50 @@ ipcMain.handle('fetch-embed-data', async (_, { url, embedType }) => {
 // ── App info ──────────────────────────────────────────────────────────────────
 ipcMain.handle('get-version', () => app.getVersion());
 
-// ── Auto-update (GitHub Releases via electron-updater) ───────────────────────
-// Only active in the installed build; `npm start` (unpackaged) reports "dev".
+// ── Auto-update ───────────────────────────────────────────────────────────────
+// Two sources, checked in this order when you click ⟳ Update:
+//  1. The Updates folder  (Documents\NabuBrainstorm\Updates) — drop a newer
+//     "NabuBrainstorm Setup x.y.z.exe" in there and the button installs it. No internet needed.
+//  2. GitHub Releases (electron-updater) — packaged/installed builds only.
+const UPDATES_DIR = () => path.join(BASE_DIR(), 'Updates');
+function ensureUpdatesDir(){
+  const d = UPDATES_DIR();
+  try {
+    fs.mkdirSync(d, { recursive: true });
+    const r = path.join(d, 'README.txt');
+    if (!fs.existsSync(r)) fs.writeFileSync(r,
+      'NabuBrainstorm — Updates folder\r\n\r\nDrop a newer installer here (named like "NabuBrainstorm Setup 1.13.0.exe")\r\n' +
+      'then click the ⟳ Update button in the app. It installs the newest version found here\r\n' +
+      'and restarts. Your boards are never touched.\r\n');
+  } catch(e){}
+  return d;
+}
+function cmpVer(a, b){
+  const x = a.split('.').map(Number), y = b.split('.').map(Number);
+  for (let i = 0; i < 3; i++){ if ((x[i]||0) !== (y[i]||0)) return (x[i]||0) - (y[i]||0); }
+  return 0;
+}
+function findLocalUpdate(){
+  try {
+    const d = ensureUpdatesDir(), cur = app.getVersion(); let best = null;
+    fs.readdirSync(d).forEach(f => {
+      const m = /^NabuBrainstorm[ -]Setup[ -](\d+\.\d+\.\d+)\.exe$/i.exec(f);
+      if (m && cmpVer(m[1], cur) > 0 && (!best || cmpVer(m[1], best.version) > 0)) best = { version: m[1], file: path.join(d, f) };
+    });
+    return best;
+  } catch(e){ return null; }
+}
+let localUpdate = null;
 let autoUpdater = null;
 function sendUpdate(state, extra = {}){
   if (win && !win.isDestroyed()) win.webContents.send('update-status', { state, ...extra });
+}
+function friendlyUpdateError(e){
+  const m = String((e && e.message) || e || '');
+  if (/app-update\.yml/i.test(m)) return 'This build has no online-update info — use the Updates folder (Help → 📁 Updates folder).';
+  if (/404|406|latest\.yml|No published versions|Cannot find/i.test(m)) return 'No published release found yet — put the new installer in the Updates folder instead.';
+  if (/ENOTFOUND|ECONN|ETIMEDOUT|net::|network/i.test(m)) return 'Could not reach GitHub — check your internet, or use the Updates folder.';
+  return m.slice(0, 160);
 }
 function initUpdater(){
   if (!app.isPackaged || autoUpdater) return;
@@ -611,23 +756,171 @@ function initUpdater(){
     autoUpdater = require('electron-updater').autoUpdater;
     autoUpdater.autoDownload = false;
     autoUpdater.on('checking-for-update', () => sendUpdate('checking'));
-    autoUpdater.on('update-available',    i => sendUpdate('available', { version: i.version }));
+    autoUpdater.on('update-available',    i => sendUpdate('available', { version: i.version, source: 'github' }));
     autoUpdater.on('update-not-available',() => sendUpdate('none'));
     autoUpdater.on('download-progress',   p => sendUpdate('downloading', { percent: Math.round(p.percent) }));
-    autoUpdater.on('update-downloaded',   i => sendUpdate('ready', { version: i.version }));
-    autoUpdater.on('error',               e => sendUpdate('error', { message: String(e && e.message || e).slice(0, 200) }));
+    autoUpdater.on('update-downloaded',   i => sendUpdate('ready', { version: i.version, source: 'github' }));
+    autoUpdater.on('error',               e => sendUpdate('error', { message: friendlyUpdateError(e) }));
   } catch(e){ autoUpdater = null; }
 }
 ipcMain.handle('update-check', async () => {
+  sendUpdate('checking');
+  localUpdate = findLocalUpdate();
+  if (localUpdate){ sendUpdate('available', { version: localUpdate.version, source: 'folder' }); return { success: true }; }
   initUpdater();
-  if (!autoUpdater) { sendUpdate('dev'); return { success: false, dev: true }; }
+  if (!autoUpdater){ sendUpdate('dev'); return { success: false, dev: true }; }
   try { await autoUpdater.checkForUpdates(); return { success: true }; }
-  catch(e){ sendUpdate('error', { message: String(e.message || e).slice(0, 200) }); return { success: false }; }
+  catch(e){ sendUpdate('error', { message: friendlyUpdateError(e) }); return { success: false }; }
 });
 ipcMain.handle('update-download', async () => {
+  if (localUpdate){ sendUpdate('ready', { version: localUpdate.version, source: 'folder' }); return { success: true }; }
   if (!autoUpdater) return { success: false };
   try { await autoUpdater.downloadUpdate(); return { success: true }; }
-  catch(e){ sendUpdate('error', { message: String(e.message || e).slice(0, 200) }); return { success: false }; }
+  catch(e){ sendUpdate('error', { message: friendlyUpdateError(e) }); return { success: false }; }
 });
-ipcMain.on('update-install', () => { if (autoUpdater) autoUpdater.quitAndInstall(); });
-app.whenReady().then(() => setTimeout(() => { initUpdater(); if (autoUpdater) autoUpdater.checkForUpdates().catch(()=>{}); }, 5000));
+ipcMain.on('update-install', () => {
+  if (localUpdate){
+    const file = localUpdate.file;
+    // Launch the installer once this app has fully exited so it can replace the files.
+    app.once('quit', () => {
+      try { require('child_process').spawn(file, ['--updated', '/S', '--force-run'], { detached: true, stdio: 'ignore' }).unref(); } catch(e){}
+    });
+    app.quit(); return;
+  }
+  if (autoUpdater) autoUpdater.quitAndInstall();
+});
+ipcMain.handle('open-updates-folder', async () => { await shell.openPath(ensureUpdatesDir()); return { success: true, dir: UPDATES_DIR() }; });
+app.whenReady().then(() => setTimeout(() => {
+  ensureUpdatesDir();
+  localUpdate = findLocalUpdate();
+  if (localUpdate){ sendUpdate('available', { version: localUpdate.version, source: 'folder' }); return; }
+  initUpdater(); if (autoUpdater) autoUpdater.checkForUpdates().catch(() => {});
+}, 5000));
+
+// ── Teleprompter window ───────────────────────────────────────────────────────
+let prompterWin = null;
+ipcMain.handle('open-prompter-window', () => {
+  if (prompterWin && !prompterWin.isDestroyed()){ prompterWin.focus(); return true; }
+  prompterWin = new BrowserWindow({
+    width: 760, height: 520, minWidth: 360, minHeight: 240,
+    title: 'NabuBrainstorm — Teleprompter', backgroundColor: '#000000',
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, webSecurity: false }
+  });
+  prompterWin.setMenuBarVisibility(false);
+  prompterWin.on('page-title-updated', e => e.preventDefault());
+  prompterWin.loadURL(`http://127.0.0.1:${serverPort}/board.html?prompter=1&k=${getToken()}`);
+  prompterWin.on('closed', () => { prompterWin = null; });
+  return true;
+});
+
+// ── OBS WebSocket client (OBS 28+ built-in server, protocol v5) ───────────────
+// Lets the app switch scenes, start/stop recording and drop chapter markers when a
+// cut-in goes live. In OBS: Tools → WebSocket Server Settings → enable, set a password.
+const obs = { ws: null, ready: false, id: 0, pending: new Map(), recording: false, scene: '', scenes: [], error: '' };
+function obsPushStatus(){
+  if (win && !win.isDestroyed()) win.webContents.send('obs-status', {
+    connected: obs.ready, recording: obs.recording, scene: obs.scene, scenes: obs.scenes, error: obs.error
+  });
+}
+function obsSettings(){
+  const cfg = readConfig(); const o = cfg.obs || {};
+  return { host: o.host || '127.0.0.1', port: o.port || 4455, autoConnect: !!o.autoConnect, hasPassword: !!cfg.obsPwd, canStorePassword: safeStorage.isEncryptionAvailable() };
+}
+function obsStoredPassword(){
+  try { const b = readConfig().obsPwd; return b ? safeStorage.decryptString(Buffer.from(b, 'base64')) : ''; } catch(e){ return ''; }
+}
+function obsRequest(type, data = {}){
+  return new Promise((resolve, reject) => {
+    if (!obs.ready || !obs.ws) return reject(new Error('OBS not connected'));
+    const requestId = String(++obs.id);
+    const t = setTimeout(() => { obs.pending.delete(requestId); reject(new Error('OBS request timed out')); }, 5000);
+    obs.pending.set(requestId, { resolve, reject, t });
+    obs.ws.send(JSON.stringify({ op: 6, d: { requestType: type, requestId, requestData: data } }));
+  });
+}
+async function obsRefresh(){
+  try {
+    const sc = await obsRequest('GetSceneList');
+    obs.scenes = (sc.responseData.scenes || []).map(x => x.sceneName).reverse();
+    obs.scene = sc.responseData.currentProgramSceneName || '';
+    const rs = await obsRequest('GetRecordStatus');
+    obs.recording = !!rs.responseData.outputActive;
+  } catch(e){}
+  obsPushStatus();
+}
+function obsDisconnect(){
+  if (obs.ws){ try { obs.ws.close(); } catch(e){} }
+  obs.ws = null; obs.ready = false; obs.recording = false;
+  obs.pending.forEach(p => { clearTimeout(p.t); p.reject(new Error('disconnected')); }); obs.pending.clear();
+}
+function obsConnect({ host, port, password }){
+  obsDisconnect(); obs.error = '';
+  return new Promise(resolve => {
+    let done = false;
+    const finish = r => { if (!done){ done = true; obsPushStatus(); resolve(r); } };
+    let ws;
+    try { ws = new WebSocket(`ws://${host || '127.0.0.1'}:${port || 4455}`); }
+    catch(e){ obs.error = e.message; return finish({ success: false, error: obs.error }); }
+    obs.ws = ws;
+    const timer = setTimeout(() => { obs.error = 'Timed out — is OBS running with the WebSocket server enabled?'; try { ws.close(); } catch(e){} finish({ success: false, error: obs.error }); }, 6000);
+    ws.onerror = () => { obs.error = 'Could not reach OBS — is it running with Tools → WebSocket Server Settings enabled?'; };
+    ws.onclose = ev => {
+      clearTimeout(timer); const was = obs.ready; obs.ready = false; obs.recording = false;
+      if (ev && ev.code === 4009) obs.error = 'Wrong WebSocket password';
+      finish({ success: false, error: obs.error || 'Connection closed' }); if (was) obsPushStatus();
+    };
+    ws.onmessage = async ev => {
+      let m; try { m = JSON.parse(ev.data); } catch(e){ return; }
+      if (m.op === 0){
+        const ident = { rpcVersion: 1, eventSubscriptions: 4 | 64 };   // Scenes + Outputs
+        if (m.d.authentication){
+          const secret = crypto.createHash('sha256').update((password || '') + m.d.authentication.salt).digest('base64');
+          ident.authentication = crypto.createHash('sha256').update(secret + m.d.authentication.challenge).digest('base64');
+        }
+        ws.send(JSON.stringify({ op: 1, d: ident }));
+      } else if (m.op === 2){
+        clearTimeout(timer); obs.ready = true; obs.error = '';
+        await obsRefresh(); finish({ success: true });
+      } else if (m.op === 5){
+        if (m.d.eventType === 'RecordStateChanged'){ obs.recording = !!m.d.eventData.outputActive; obsPushStatus(); }
+        else if (m.d.eventType === 'CurrentProgramSceneChanged'){ obs.scene = m.d.eventData.sceneName; obsPushStatus(); }
+        else if (m.d.eventType === 'SceneListChanged'){ obsRefresh(); }
+      } else if (m.op === 7){
+        const p = obs.pending.get(m.d.requestId); if (!p) return;
+        obs.pending.delete(m.d.requestId); clearTimeout(p.t);
+        if (m.d.requestStatus && m.d.requestStatus.result) p.resolve(m.d); else p.reject(new Error((m.d.requestStatus && m.d.requestStatus.comment) || 'OBS request failed'));
+      }
+    };
+  });
+}
+const OBS_ALLOWED = new Set(['SetCurrentProgramScene','StartRecord','StopRecord','ToggleRecord','CreateRecordChapter','GetSceneList']);
+ipcMain.handle('obs-get-settings', () => ({ ...obsSettings(), status: { connected: obs.ready, recording: obs.recording, scene: obs.scene, scenes: obs.scenes, error: obs.error } }));
+ipcMain.handle('obs-connect', async (_, { host, port, password, remember, autoConnect }) => {
+  const cfg = readConfig();
+  cfg.obs = { host: host || '127.0.0.1', port: parseInt(port, 10) || 4455, autoConnect: !!autoConnect };
+  if (remember && password && safeStorage.isEncryptionAvailable()) cfg.obsPwd = safeStorage.encryptString(password).toString('base64');
+  if (!remember) delete cfg.obsPwd;
+  writeConfig(cfg);
+  return obsConnect({ host: cfg.obs.host, port: cfg.obs.port, password: password || obsStoredPassword() });
+});
+ipcMain.handle('obs-disconnect', () => { obsDisconnect(); obsPushStatus(); return { success: true }; });
+ipcMain.handle('obs-request', async (_, { type, data }) => {
+  if (!OBS_ALLOWED.has(type)) return { success: false, error: 'Not allowed' };
+  try { const r = await obsRequest(type, data || {}); return { success: true, data: r.responseData }; }
+  catch(e){ return { success: false, error: e.message }; }
+});
+app.whenReady().then(() => setTimeout(() => {
+  const o = obsSettings();
+  if (o.autoConnect) obsConnect({ host: o.host, port: o.port, password: obsStoredPassword() });
+}, 3000));
+app.on('before-quit', () => obsDisconnect());
+
+// ── Save a text file via the native dialog (EDL / CSV / chapters) ─────────────
+ipcMain.handle('save-text-file', async (_, { defaultName, content }) => {
+  try {
+    const res = await dialog.showSaveDialog(win, { title: 'Save', defaultPath: path.join(app.getPath('documents'), defaultName || 'export.txt') });
+    if (res.canceled || !res.filePath) return { success: false };
+    fs.writeFileSync(res.filePath, content, 'utf8');
+    return { success: true, filePath: res.filePath };
+  } catch (err) { return { success: false, error: err.message }; }
+});

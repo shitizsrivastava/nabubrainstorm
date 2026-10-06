@@ -53,10 +53,22 @@ contextBridge.exposeInMainWorld('nabu', {
   // OBS one-at-a-time cut-in commands (global hotkeys / HTTP / remote dock)
   onShowCmd: (cb) => ipcRenderer.on('show-cmd', (_, c) => cb(c)),
 
+  saveTextFile: (p) => ipcRenderer.invoke('save-text-file', p),
+  // Hotkeys, OBS WebSocket, teleprompter
+  getHotkeys:   () => ipcRenderer.invoke('get-hotkeys'),
+  setHotkeys:   (hk) => ipcRenderer.invoke('set-hotkeys', hk),
+  obsGetSettings: () => ipcRenderer.invoke('obs-get-settings'),
+  obsConnect:     (p) => ipcRenderer.invoke('obs-connect', p),
+  obsDisconnect:  () => ipcRenderer.invoke('obs-disconnect'),
+  obsRequest:     (type, data) => ipcRenderer.invoke('obs-request', { type, data }),
+  onObsStatus:    (cb) => ipcRenderer.on('obs-status', (_, s) => cb(s)),
+  openPrompterWindow: () => ipcRenderer.invoke('open-prompter-window'),
+
   // Auto-update
   updateCheck:    () => ipcRenderer.invoke('update-check'),
   updateDownload: () => ipcRenderer.invoke('update-download'),
   updateInstall:  () => ipcRenderer.send('update-install'),
+  openUpdatesFolder: () => ipcRenderer.invoke('open-updates-folder'),
   onUpdateStatus: (cb) => ipcRenderer.on('update-status', (_, s) => cb(s)),
 
   // Presenter notes window
