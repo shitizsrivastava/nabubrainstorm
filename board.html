@@ -1055,6 +1055,21 @@ body.presenting .present-hud{display:block}
         <div class="st"><span class="nm">2</span><div>No internet / no online release? Open <b>❓ Help → 📁 Updates folder</b> (bottom of this window), drop the new <code>NabuBrainstorm Setup x.y.z.exe</code> in it, and click <b>⟳ Update</b> again.</div></div>
       </div></details>
 
+      <details open><summary>🚀 Easiest setup — one click (v1.13)</summary><div class="sec">
+        <div class="st"><span class="nm">1</span><div>In OBS: <b>Tools → WebSocket Server Settings → tick “Enable WebSocket server” → OK</b> (once, ever).</div></div>
+        <div class="st"><span class="nm">2</span><div>Here: click <b>📡 OBS → ⚡ Set up OBS for me</b>. It connects, adds a transparent “NabuBrainstorm Cut-ins” source to your current scene, and opens a small always-on-top buttons window.</div></div>
+        <div class="st"><span class="nm">3</span><div>Press <b>Next ▶</b> (or <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>→</kbd>) — asset 1 swings in, press again for 2, and so on. <b>✕ Hide</b> sends it away.</div></div>
+        <div class="tip"><b>Where it appears:</b> OBS panel → <b>📐 Where images appear</b> — drag the gold box, pull its corner to resize, add a stroke / rounded corners / shadow. While recording, the buttons window has a <b>Size</b> slider, <b>Left / Center / Right</b> and an <b>Auto-hide</b> timer.</div>
+      </div></details>
+
+      <details><summary>✂ Remove a photo's background (offline AI)</summary><div class="sec">
+        Right-click an image → <b>✂ Remove background</b>. The first time it downloads a ~170&nbsp;MB model once; after that it takes about a second per image and never uploads anything. Select several images first to cut them all out. <b>↩ Restore original background</b> undoes it. Cutouts get a stroke that follows the subject's outline.
+      </div></details>
+
+      <details><summary>📱 Phone remote — iPhone or Android</summary><div class="sec">
+        <b>📡 OBS → 📱 Phone remote → Turn on</b>, then scan the QR code with your phone (same Wi-Fi as the PC). You get Prev / Next / Hide, Size, position, Auto-hide and a tap-to-jump list. It is <b>off by default</b>; only devices on your home network that have the secret link can use it, and it never exposes your files. First time, allow it in the Windows firewall (Private networks).
+      </div></details>
+
       <details><summary>⚡ Quick start — short version</summary><div class="sec">
         <div class="tip"><b>The idea:</b> you number your assets 1, 2, 3… on the board. In OBS, one special <i>Browser Source</i> shows <b>one asset at a time</b> on a transparent background, on top of your webcam — exactly like dropping a PNG or clip on the timeline, but live. You press a hotkey (or a button) to bring up the next one.</div>
         <div class="st"><span class="nm">1</span><div><b>Number your assets.</b> Every asset has a small gold number badge. That number is the order they will appear in. Click a badge to change it. Sub-assets (Alt+drag onto another asset) appear as 1.1, 1.2 right after their parent.</div></div>
@@ -1523,7 +1538,7 @@ function detachAsset(id){
 // ── Version / build stamp ─────────────────────────────────────
 // APP_VERSION is bumped by hand; BUILD_DATE is auto-stamped by deploy.ps1
 // (it replaces the 2026-07-04 token in the deployed copy each deploy).
-const APP_VERSION = '1.13.2';
+const APP_VERSION = '1.13.3';
 const BUILD_DATE  = '2026-10-08';
 (function stampVersion(){
   const dated = /^\d{4}-\d{2}-\d{2}/.test(BUILD_DATE);

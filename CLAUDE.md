@@ -546,10 +546,20 @@ with them, not something to swap in quietly.
 - **Remote window extras**: Size slider, ⬅/Center/➡ buttons, global Auto-hide select — these call `/obs-cmd?a=size|pos|autohide&n=`, handled in `showCmd()`.
 - **Stuck-image fixes**: overlay hides on SSE error; main.js broadcasts `show:null` on quit; `cutReset()` on board load/new/restore/startup.
 - **Cutouts** (`✂ Remove background`, right-click an image): offline IS-Net (rembg, Apache-2.0) via `onnxruntime-node` CPU in main.js
-  (`cutout-*` IPC). Model `isnet-general-use.onnx` (~170 MB) downloads once to `%APPDATA%
-abu-brainstorm\models`. Pre/post-processing is
+  (`cutout-*` IPC). Model `isnet-general-use.onnx` (~170 MB) downloads once to `%APPDATA%\nabu-brainstorm\models`. Pre/post-processing is
   canvas code in board.html (`cutoutOne`). Original kept in `el.srcOrig`, flag `el.cutout`; `externalize()/internalize()` handle both `src` and `srcOrig`.
   Session is released after 2 idle minutes (~1 GB RAM while loaded). `package.json` build excludes non-Windows onnxruntime binaries and `asarUnpack`s it.
+- **Phone remote** (v1.13.1, OFF by default; OBS panel → 📱 Phone remote): a SECOND http server on port 41420 bound to 0.0.0.0, started by
+  `startPhone()` only when `cfg.phoneRemote` is true. It serves only `phone.html` + `/state` + `/cmd`, never `board.html`/media/files; requires the
+  secret key `k=`, a private-network client address (`isPrivateAddr`) and an IP-literal Host header (anti DNS-rebinding). `/cmd` is whitelisted
+  (`PHONE_CMDS`) and goes through `sendShowCmd` like the hotkeys. The renderer pushes `{type:'rundown', items, size, auto}` over the SSE relay
+  (`obsPushRundown()`) so `/state` can list assets. QR code via the `qrcode` package (`phone-get`/`phone-set` IPC). The test copy and the installed app
+  share `nabu-config.json`, so turn it OFF again after testing. Windows shows a firewall prompt the first time (Allow on Private networks).
+- **Update flow** (v1.13.2): clicking "Restart to update" shows an "Installing…" toast + Windows notification, autosaves, then silent-installs and relaunches
+  (takes ~20–30 s with no window). Verified working via CDP on the installed app; target the MAIN window page when scripting (`!remote=1`), the buttons
+  window also contains an `#updBtn`.
+- **Testing recipe**: launch the installed app with `--remote-debugging-port=9333` and drive it with a small CDP script (`/json`, `Runtime.evaluate`). OBS can be
+  queried/changed over its WebSocket from node (read `obs-websocket/config.json` for the port/password; it is the user's own local OBS).
 - **Update button**: 20 s watchdog on checks (never stuck on "Checking…"), silent install + relaunch (`quitAndInstall(true,true)`).
 - Toolbars wrap (`flex-wrap`) instead of clipping; window buttons order is green · yellow · red (red = close, far right).
 - OBS gotchas: OBS caches the Browser Source page — after changing board.html press `PressInputPropertiesButton refreshnocache` (or "Refresh cache of current page");
