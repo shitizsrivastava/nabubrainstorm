@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, globalShortcut, safeStorage, nativeImage } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, globalShortcut, safeStorage, nativeImage, Notification } = require('electron');
 const crypto = require('crypto');
 const path = require('path');
 const fs   = require('fs');
@@ -790,7 +790,11 @@ ipcMain.handle('update-download', async () => {
   try { await autoUpdater.downloadUpdate(); return { success: true }; }
   catch(e){ sendUpdate('error', { message: friendlyUpdateError(e) }); return { success: false }; }
 });
+function notifyInstalling(){   // the silent install shows no window for ~20-30 s — say so, so it doesn't look like a crash
+  try { if (Notification.isSupported()) new Notification({ title: 'NabuBrainstorm is updating', body: 'Installing the new version — the app will reopen by itself in about 30 seconds.' }).show(); } catch(e){}
+}
 ipcMain.on('update-install', () => {
+  notifyInstalling();
   if (localUpdate){
     const file = localUpdate.file;
     // Launch the installer once this app has fully exited so it can replace the files.

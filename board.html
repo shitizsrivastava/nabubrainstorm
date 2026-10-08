@@ -1523,7 +1523,7 @@ function detachAsset(id){
 // ── Version / build stamp ─────────────────────────────────────
 // APP_VERSION is bumped by hand; BUILD_DATE is auto-stamped by deploy.ps1
 // (it replaces the 2026-07-04 token in the deployed copy each deploy).
-const APP_VERSION = '1.13.1';
+const APP_VERSION = '1.13.2';
 const BUILD_DATE  = '2026-10-08';
 (function stampVersion(){
   const dated = /^\d{4}-\d{2}-\d{2}/.test(BUILD_DATE);
@@ -4805,7 +4805,11 @@ let _updSince=0;
 function updateClick(){
   if(!window.nabu||!window.nabu.updateCheck) return;
   if(_updState==='available') return window.nabu.updateDownload();
-  if(_updState==='ready') return window.nabu.updateInstall();
+  if(_updState==='ready'){
+    const b=document.getElementById('updBtn'); if(b) b.textContent='⏳ Installing…';
+    toast('Installing the update — the app will close and reopen by itself in about 30 seconds. Your board is saved.', true, 9000);
+    return setTimeout(async()=>{ try{ await runAutoSave(); }catch(e){} window.nabu.updateInstall(); }, 900);
+  }
   // 'Checking…' older than 25s means it got stuck — allow a fresh check instead of a dead button
   if((_updState==='checking'&&Date.now()-_updSince<25000)||_updState==='downloading') return;
   window.nabu.updateCheck();
