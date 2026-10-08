@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#111111">
+<title>Nabu Remote</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#111;color:#eee;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;padding:14px 14px calc(14px + env(safe-area-inset-bottom));user-select:none;-webkit-user-select:none}
+h1{font-size:13px;margin:0 0 10px;color:#9A9686;font-weight:600;letter-spacing:.5px;display:flex;justify-content:space-between}
+#dot{color:#E63946}#dot.ok{color:#5BD38A}
+#now{font-size:17px;font-weight:700;margin-bottom:12px;min-height:24px}
+#now.live{color:#E63946}
+.row{display:flex;gap:10px;margin-bottom:12px}
+button{flex:1;border:0;border-radius:14px;background:#2A2A2A;color:#EEE;font-size:17px;font-weight:700;padding:20px 6px;touch-action:manipulation}
+button:active{transform:scale(.97);background:#3A3A3A}
+.go{background:#E9C46A;color:#1A1A1A;flex:1.5}
+.x{background:#7A2B2B}
+.sm button{font-size:14px;padding:12px 4px;border-radius:10px}
+.box{background:#1b1b1b;border-radius:14px;padding:12px;margin-bottom:12px}
+.lbl{display:flex;justify-content:space-between;font-size:13px;color:#bbb;margin-bottom:8px}
+.lbl b{color:#E9C46A}
+input[type=range]{width:100%;accent-color:#E9C46A;height:34px}
+select{width:100%;padding:12px;border-radius:10px;background:#2A2A2A;color:#EEE;border:1px solid #444;font-size:15px}
+#list .it{display:flex;gap:10px;align-items:center;padding:12px;border-radius:10px;font-size:15px}
+#list .it:active{background:#2c2c2c}
+#list .it.on{background:#5a1f26;outline:1px solid #E63946}
+#list .n{color:#E9C46A;font-weight:700;min-width:30px}
+#list .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+</head>
+<body>
+<h1><span>NABU REMOTE</span><span id="dot">● offline</span></h1>
+<div id="now">Nothing on screen</div>
+<div class="row"><button onclick="c('prev')">◀ Prev</button><button class="go" onclick="c('next')">Next ▶</button><button class="x" onclick="c('hide')">✕ Hide</button></div>
+<div class="box"><div class="lbl"><span>Size</span><b id="sv">100%</b></div><input id="size" type="range" min="40" max="200" step="5" value="100"></div>
+<div class="row sm"><button onclick="c('pos','left')">⬅ Left</button><button onclick="c('pos','center')">Center</button><button onclick="c('pos','right')">Right ➡</button></div>
+<div class="box"><div class="lbl"><span>Auto-hide after</span></div>
+<select id="auto"><option value="0">Off</option><option value="5">5 seconds</option><option value="8">8 seconds</option><option value="10">10 seconds</option><option value="15">15 seconds</option><option value="20">20 seconds</option><option value="30">30 seconds</option></select></div>
+<div id="list"></div>
+<script>
+const K = new URLSearchParams(location.search).get('k') || '';
+let busy = 0, st = { size:100, auto:0 };
+const $ = id => document.getElementById(id);
+async function c(a, n){
+  if (navigator.vibrate) navigator.vibrate(12);
+  try { await fetch('/cmd?a=' + a + (n != null ? '&n=' + encodeURIComponent(n) : '') + '&k=' + K); } catch(e){}
+  setTimeout(poll, 150);
+}
+let st0;
+$('size').oninput = e => { $('sv').textContent = e.target.value + '%'; busy = Date.now(); clearTimeout(st0); st0 = setTimeout(() => c('size', e.target.value), 90); };
+$('auto').onchange = e => { busy = Date.now(); c('autohide', e.target.value); };
+async function poll(){
+  try {
+    const r = await fetch('/state?k=' + K, { cache:'no-store' }); if (!r.ok) throw 0;
+    const s = await r.json(); $('dot').textContent = '● connected'; $('dot').className = 'ok';
+    const live = s.live && s.live.id;
+    $('now').textContent = live ? 'LIVE ' + (s.live.label || '') : 'Nothing on screen'; $('now').className = live ? 'live' : '';
+    if (Date.now() - busy > 1500){ if (s.size) { $('size').value = s.size; $('sv').textContent = s.size + '%'; } $('auto').value = String(s.auto || 0); }
+    $('list').innerHTML = (s.items || []).map(it => `<div class="it${live && s.live.label === it.label ? ' on' : ''}" onclick="c('goto','${it.label}')"><span class="n">${it.label}</span><span class="t"></span></div>`).join('');
+    [...$('list').children].forEach((d, i) => { d.lastChild.textContent = s.items[i].title; });
+  } catch(e){ $('dot').textContent = '● offline'; $('dot').className = ''; }
+}
+poll(); setInterval(poll, 1000);
+</script>
+</body>
+</html>

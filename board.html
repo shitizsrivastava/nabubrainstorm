@@ -766,6 +766,17 @@ body.presenting .present-hud{display:block}
         <button class="mb mb-s" onclick="window.nabu.openRemoteWindow()">🎛 Open cut-in buttons</button></div>
       <div id="obsAutoMsg" style="font-size:11px;color:#aaa;margin-bottom:8px;line-height:1.5">Adds a transparent overlay to your current OBS scene and opens a small window with <b>Next / Previous / Hide</b> buttons. Shortcuts Ctrl+Alt+→ / ← / ↓ work too.</div>
 
+      <h4>📱 Phone remote <span>— iPhone or Android, same Wi-Fi</span></h4>
+      <div class="chk"><label><input type="checkbox" id="phEn" onchange="phoneToggle()"> Turn on phone remote</label></div>
+      <div id="phBox" style="display:none;gap:14px;align-items:center;margin:6px 0 10px;flex-wrap:wrap">
+        <img id="phQr" width="150" height="150" style="border-radius:8px;background:#fff;flex:none" alt="QR code">
+        <div style="flex:1;min-width:200px;font-size:12px;color:#bbb;line-height:1.55">
+          <b style="color:#E9C46A">1.</b> Phone on the <b>same Wi-Fi</b> as this PC.<br><b style="color:#E9C46A">2.</b> Point the phone camera at the QR code and open the link.<br>
+          <b style="color:#E9C46A">3.</b> Tip: in the browser menu choose <i>Add to Home Screen</i> for a one-tap icon.
+          <div style="margin-top:6px"><code id="phUrl" style="font-size:10px;word-break:break-all;color:#888"></code></div>
+          <button class="mb mb-s" style="margin-top:6px" onclick="phoneCopy()">Copy link</button></div></div>
+      <div id="phMsg" style="font-size:11px;color:#aaa;margin-bottom:8px">Off by default. Only devices on your home network that have the secret link can press Next / Prev / Hide — nobody can see your files.</div>
+
       <h4>📐 Where images appear <span>— drag the gold box, pull its corner to resize</span></h4>
       <div id="lyStage" style="position:relative;width:100%;aspect-ratio:16/9;background:#0b0b0b;border:1px solid #333;border-radius:6px;overflow:hidden;touch-action:none;user-select:none">
         <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#2a2a2a;font-size:22px;font-weight:700;letter-spacing:2px;pointer-events:none">YOUR VIDEO</div>
@@ -1512,7 +1523,7 @@ function detachAsset(id){
 // ── Version / build stamp ─────────────────────────────────────
 // APP_VERSION is bumped by hand; BUILD_DATE is auto-stamped by deploy.ps1
 // (it replaces the 2026-07-04 token in the deployed copy each deploy).
-const APP_VERSION = '1.13.0';
+const APP_VERSION = '1.13.1';
 const BUILD_DATE  = '2026-10-07';
 (function stampVersion(){
   const dated = /^\d{4}-\d{2}-\d{2}/.test(BUILD_DATE);
@@ -1760,7 +1771,7 @@ let _obsBoardT = null, _obsVpOk = true, _obsPosOk = true;
 function obsPushBoard(){ // full board — debounced, sent on structural changes
   if (obsView || exportMode) return;
   clearTimeout(_obsBoardT);
-  _obsBoardT = setTimeout(() => obsSend({ type:'board', elements: board.elements, connectors: board.connectors||[], noSerials: !serialsVisible }), 200);
+  _obsBoardT = setTimeout(() => { obsSend({ type:'board', elements: board.elements, connectors: board.connectors||[], noSerials: !serialsVisible }); obsPushRundown(); }, 200);
 }
 function obsPushVP(){ // viewport — ~30fps trailing throttle, mirrors pans/zooms/glides
   if (obsView || exportMode || !_obsVpOk) return;
@@ -5060,10 +5071,10 @@ function showCmd(c){
   if (c.a === 'size'){   // live bigger/smaller from the buttons window slider (percent of the placement box)
     const v = Math.max(30, Math.min(250, parseInt(c.n, 10) || 100));
     try { localStorage.setItem('nabuCutSize', String(v)); } catch(e){}
-    lyResend(); return;
+    lyResend(); obsPushRundown(); return;
   }
   if (c.a === 'pos'){ if (LY_PRESETS[c.n]) lyPreset(c.n); return; }
-  if (c.a === 'autohide'){ const v = Math.max(0, Math.min(300, parseInt(c.n, 10) || 0)); try { localStorage.setItem('nabuAutoHide', String(v)); } catch(e){} toast(v ? `⏱ Images hide themselves after ${v}s` : '⏱ Auto-hide off', true); return; }
+  if (c.a === 'autohide'){ const v = Math.max(0, Math.min(300, parseInt(c.n, 10) || 0)); try { localStorage.setItem('nabuAutoHide', String(v)); } catch(e){} toast(v ? `⏱ Images hide themselves after ${v}s` : '⏱ Auto-hide off', true); obsPushRundown(); return; }
   clearTimeout(_autoHideT);
   const items = nvRundownItems();
   if (!items.length){ toast('Nothing numbered to show yet — assets need serial numbers', true); return; }
@@ -5191,7 +5202,7 @@ async function openObsPanel(){
   document.getElementById('obsAuto').checked = !!s.autoConnect;
   document.getElementById('obsRemember').checked = !!s.hasPassword; document.getElementById('obsRemember').disabled = !s.canStorePassword;
   document.getElementById('obsPwd').placeholder = s.hasPassword ? '(saved — leave blank to reuse)' : 'WebSocket password';
-  obsSt = s.status; updateObsUi();
+  obsSt = s.status; updateObsUi(); phoneRefresh();
   const pr = obsPrefs(); document.getElementById('obsAutoChap').checked = pr.autoChapter; document.getElementById('obsRetScene').checked = pr.returnScene;
   ['next','prev','hide','laser'].forEach(a => { const i = document.getElementById('hk_'+a); i.value = hk.hotkeys[a]; i.classList.toggle('bad', hk.status[a] === false); });
   fillGuideLinks();
@@ -5236,9 +5247,32 @@ function lyRender(){
   b.style.left = ((l.cx - l.w/2) * 100) + '%'; b.style.top = ((l.cy - l.h/2) * 100) + '%';
   b.style.width = (l.w * 100) + '%'; b.style.height = (l.h * 100) + '%';
 }
+async function phoneRefresh(){
+  try {
+    const r = await window.nabu.phoneGet(), box = document.getElementById('phBox'), msg = document.getElementById('phMsg');
+    document.getElementById('phEn').checked = !!r.enabled;
+    box.style.display = r.enabled && r.url ? 'flex' : 'none';
+    if (r.url){ document.getElementById('phQr').src = r.qr; document.getElementById('phUrl').textContent = r.url; }
+    if (r.error){ msg.style.color = '#FF8A8A'; msg.textContent = '✗ ' + r.error; }
+    else if (r.noNetwork){ msg.style.color = '#FFB84D'; msg.textContent = 'No home-network connection found — connect this PC to Wi-Fi/LAN first.'; }
+    else if (r.enabled){ msg.style.color = '#7CD992'; msg.textContent = '✓ On. If Windows asks about the firewall, choose Allow on Private networks.'; }
+    else { msg.style.color = '#aaa'; msg.textContent = 'Off by default. Only devices on your home network that have the secret link can press Next / Prev / Hide — nobody can see your files.'; }
+  } catch(e){}
+}
+async function phoneToggle(){ await window.nabu.phoneSet(document.getElementById('phEn').checked); obsPushRundown(); phoneRefresh(); }
+function phoneCopy(){ const u = document.getElementById('phUrl').textContent; if (u){ navigator.clipboard.writeText(u); toast('Link copied ✓', true); } }
+let _rdT = null;
+function obsPushRundown(){   // lightweight list for the phone remote (labels + titles only)
+  if (obsView || exportMode || remoteView || prompterView || notesView) return;
+  clearTimeout(_rdT);
+  _rdT = setTimeout(() => {
+    let ah = 0; try { ah = parseInt(localStorage.getItem('nabuAutoHide'), 10) || 0; } catch(e){}
+    try { obsSend({ type:'rundown', items: nvRundownItems().map(it => ({ label: it.label, title: cutTitle(it.el) || it.el.type })), size: cutSizeGet(), auto: ah }); } catch(e){}
+  }, 150);
+}
 function cutReset(){   // board swapped or app (re)started → nothing is live any more
   _showIdx = -1; _liveId = null; markLive();
-  obsSend({ type:'show', id:null });
+  obsSend({ type:'show', id:null }); obsPushRundown();
 }
 function lyResend(){
   if (!_liveId) return;

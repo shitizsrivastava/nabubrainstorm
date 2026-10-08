@@ -61,6 +61,8 @@ contextBridge.exposeInMainWorld('nabu', {
   obsConnect:     (p) => ipcRenderer.invoke('obs-connect', p),
   obsDisconnect:  () => ipcRenderer.invoke('obs-disconnect'),
   obsRequest:     (type, data) => ipcRenderer.invoke('obs-request', { type, data }),
+  phoneGet:       () => ipcRenderer.invoke('phone-get'),
+  phoneSet:       (on) => ipcRenderer.invoke('phone-set', on),
   cutoutStatus:   () => ipcRenderer.invoke('cutout-status'),
   cutoutPrepare:  () => ipcRenderer.invoke('cutout-prepare'),
   cutoutRun:      (data) => ipcRenderer.invoke('cutout-run', data),

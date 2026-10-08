@@ -991,6 +991,70 @@ app.on('before-quit', () => {
   obsClients.forEach(c => { try { c.write(`data: ${hide}\n\n`); } catch(e){} });
 });
 
+// ── Phone remote ──────────────────────────────────────────────────────────────
+// Optional, off by default. A SECOND tiny server (port 41420) on the home network that serves only
+// phone.html and three token-guarded routes (/state, /cmd). It never serves board.html, media or
+// files, only accepts private-network clients, and needs the secret key from the QR code / link.
+const os = require('os');
+const PHONE_PORT = 41420;
+let phoneSrv = null;
+const isPrivateAddr = a => { a = String(a || '').replace('::ffff:', ''); return /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.)/.test(a) || a === '127.0.0.1' || a === '::1'; };
+function lanIp(){
+  const all = [];
+  Object.values(os.networkInterfaces()).forEach(l => (l || []).forEach(i => { if (i.family === 'IPv4' && !i.internal && isPrivateAddr(i.address)) all.push(i.address); }));
+  return all.find(a => a.startsWith('192.168.')) || all[0] || null;
+}
+const PHONE_CMDS = new Set(['next', 'prev', 'hide', 'toggle', 'goto', 'size', 'pos', 'autohide']);
+function phoneHandler(req, res){
+  const deny = c => { res.writeHead(c); res.end(); };
+  if (!isPrivateAddr(req.socket.remoteAddress)) return deny(403);
+  if (!/^(\d{1,3}\.){3}\d{1,3}(:\d+)?$/.test(req.headers.host || '')) return deny(403);   // IP hosts only (blocks DNS rebinding)
+  const u = new URL(req.url, 'http://x'), k = u.searchParams.get('k') || '', tok = getToken();
+  if (k.length !== tok.length || !crypto.timingSafeEqual(Buffer.from(k), Buffer.from(tok))) return deny(403);
+  if (u.pathname === '/' || u.pathname === '/phone'){
+    return fs.readFile(path.join(__dirname, 'phone.html'), (err, d) => {
+      if (err) return deny(404);
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(d);
+    });
+  }
+  if (u.pathname === '/state'){
+    let live = null, rd = {}; try { live = obsLast.show ? JSON.parse(obsLast.show) : null; } catch(e){} try { rd = obsLast.rundown ? JSON.parse(obsLast.rundown) : {}; } catch(e){}
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify({ live: live && { id: live.id, label: live.label, idx: live.idx, total: live.total }, items: rd.items || [], size: rd.size, auto: rd.auto }));
+  }
+  if (u.pathname === '/cmd'){
+    const a = u.searchParams.get('a') || '';
+    if (!PHONE_CMDS.has(a)) return deny(400);
+    sendShowCmd({ a, n: u.searchParams.get('n') });
+    res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end('{"ok":true}');
+  }
+  deny(404);
+}
+function startPhone(){
+  if (phoneSrv) return Promise.resolve({});
+  return new Promise(resolve => {
+    const s = http.createServer(phoneHandler);
+    s.once('error', e => { phoneSrv = null; resolve({ error: e.code === 'EADDRINUSE' ? 'Port ' + PHONE_PORT + ' is already in use' : e.message }); });
+    s.listen(PHONE_PORT, '0.0.0.0', () => { s.removeAllListeners('error'); phoneSrv = s; resolve({}); });
+  });
+}
+function stopPhone(){ if (phoneSrv){ try { phoneSrv.close(); phoneSrv.closeAllConnections && phoneSrv.closeAllConnections(); } catch(e){} phoneSrv = null; } }
+async function phoneInfo(extra = {}){
+  const ip = lanIp(), on = !!phoneSrv;
+  const url = on && ip ? `http://${ip}:${PHONE_PORT}/?k=${getToken()}` : '';
+  let qr = ''; if (url){ try { qr = await require('qrcode').toDataURL(url, { margin: 1, width: 220 }); } catch(e){} }
+  return { enabled: on, url, qr, noNetwork: on && !ip, ...extra };
+}
+ipcMain.handle('phone-get', () => phoneInfo());
+ipcMain.handle('phone-set', async (_, enable) => {
+  const cfg = readConfig(); cfg.phoneRemote = !!enable; writeConfig(cfg);
+  if (enable){ const r = await startPhone(); if (r.error){ cfg.phoneRemote = false; writeConfig(cfg); return phoneInfo({ error: r.error }); } }
+  else stopPhone();
+  return phoneInfo();
+});
+app.whenReady().then(() => { if (readConfig().phoneRemote) startPhone(); });
+app.on('before-quit', stopPhone);
+
 // ── Photo cutouts: offline AI background removal ──────────────────────────────
 // IS-Net "general use" (Apache-2.0, from the rembg project) run locally with onnxruntime-node.
 // The ~170 MB model is downloaded once, on the user's first click, into userData\models.
