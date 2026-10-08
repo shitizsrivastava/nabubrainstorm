@@ -245,7 +245,9 @@ function startLocalServer() {
 function sendShowCmd(cmd){ if (win && !win.isDestroyed()) win.webContents.send('show-cmd', cmd); }
 // Global hotkeys work even while OBS (or any other app) has focus. Rebindable in the
 // Help → OBS Guide → Settings panel; stored in nabu-config.json.
-const DEFAULT_HOTKEYS = { next:'CommandOrControl+Alt+Right', prev:'CommandOrControl+Alt+Left', hide:'CommandOrControl+Alt+Down', laser:'CommandOrControl+Alt+L' };
+const DEFAULT_HOTKEYS = { next:'F8', prev:'F7', hide:'F6', laser:'CommandOrControl+Alt+L' };
+// the original combos keep working too, so nothing you learned earlier stops
+const ALIAS_HOTKEYS = { next:'CommandOrControl+Alt+Right', prev:'CommandOrControl+Alt+Left', hide:'CommandOrControl+Alt+Down' };
 let hotkeyStatus = {};
 function currentHotkeys(){ return { ...DEFAULT_HOTKEYS, ...(readConfig().hotkeys || {}) }; }
 function registerShowHotkeys(){
@@ -255,6 +257,7 @@ function registerShowHotkeys(){
     try { hotkeyStatus[a] = !!acc && globalShortcut.register(acc, () => sendShowCmd({ a })); }
     catch(e){ hotkeyStatus[a] = false; }
   });
+  Object.entries(ALIAS_HOTKEYS).forEach(([a, acc]) => { try { if (acc !== currentHotkeys()[a] && !globalShortcut.isRegistered(acc)) globalShortcut.register(acc, () => sendShowCmd({ a })); } catch(e){} });
   return hotkeyStatus;
 }
 ipcMain.handle('get-hotkeys', () => ({ hotkeys: currentHotkeys(), defaults: DEFAULT_HOTKEYS, status: hotkeyStatus }));
