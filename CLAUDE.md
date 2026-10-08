@@ -533,6 +533,28 @@ with them, not something to swap in quietly.
   toasts that and resets `_dupHighlightOn` back to `false` so the button doesn't get stuck "on" with
   nothing highlighted.
 
+## v1.13 additions (cut-in polish, one-click OBS, cutouts)
+- **One-click OBS setup**: `obs-autosetup` IPC in main.js reads OBS's own `%APPDATA%\obs-studio\plugin_config\obs-websocket\config.json`
+  (so the password is never typed), connects, and creates/updates the `NabuBrainstorm Cut-ins` Browser Source (`?obs=1&mode=solo`)
+  in the current scene, then opens the small always-on-top buttons window (`open-remote-window` → `?remote=1`). Needs OBS's
+  WebSocket server enabled (Tools → WebSocket Server Settings). Button: OBS panel → "⚡ Set up OBS for me".
+- **Placement box** (OBS panel, `lyStage`/`lyBox`): global, stored in `localStorage['nabuCutLayout']` as fractions `{cx,cy,w,h}`;
+  `cutLayoutGet()` multiplies w/h by the live size slider (`nabuCutSize`, %). Sent with every `show` SSE message (`layout`, `style`),
+  so the overlay needs no board schema change. A per-asset `cut.pos` still overrides it.
+- **Style**: stroke / rounded corners / shadow (`nabuCutStyle`); for cutouts the stroke is a ring of `drop-shadow` filters so it follows the subject.
+- **Animation `arc`** (default): image swings in along a curved path from the top corner on its side, scaling up; exits in reverse (WAAPI keyframes in `soloShow`).
+- **Remote window extras**: Size slider, ⬅/Center/➡ buttons, global Auto-hide select — these call `/obs-cmd?a=size|pos|autohide&n=`, handled in `showCmd()`.
+- **Stuck-image fixes**: overlay hides on SSE error; main.js broadcasts `show:null` on quit; `cutReset()` on board load/new/restore/startup.
+- **Cutouts** (`✂ Remove background`, right-click an image): offline IS-Net (rembg, Apache-2.0) via `onnxruntime-node` CPU in main.js
+  (`cutout-*` IPC). Model `isnet-general-use.onnx` (~170 MB) downloads once to `%APPDATA%
+abu-brainstorm\models`. Pre/post-processing is
+  canvas code in board.html (`cutoutOne`). Original kept in `el.srcOrig`, flag `el.cutout`; `externalize()/internalize()` handle both `src` and `srcOrig`.
+  Session is released after 2 idle minutes (~1 GB RAM while loaded). `package.json` build excludes non-Windows onnxruntime binaries and `asarUnpack`s it.
+- **Update button**: 20 s watchdog on checks (never stuck on "Checking…"), silent install + relaunch (`quitAndInstall(true,true)`).
+- Toolbars wrap (`flex-wrap`) instead of clipping; window buttons order is green · yellow · red (red = close, far right).
+- OBS gotchas: OBS caches the Browser Source page — after changing board.html press `PressInputPropertiesButton refreshnocache` (or "Refresh cache of current page");
+  the OBSBOT Center app can zoom the camera (AI tracking / zoom slider) independent of OBS.
+
 ## Common pitfalls
 - After editing any source file, always run `deploy.ps1` — the app reads from `app.asar`
 - `board.connectors` may be undefined on old saves — always guard with `|| []`

@@ -8,7 +8,7 @@
 body{font-family:'Segoe UI',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden;background:#23211C;color:#222;user-select:none}
 
 /* Titlebar */
-.tb{height:40px;background:#1A1A1A;display:flex;align-items:center;gap:10px;padding:0 14px;-webkit-app-region:drag;flex-shrink:0}
+.tb{min-height:40px;background:#1A1A1A;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:4px 14px;-webkit-app-region:drag;flex-shrink:0}
 .tb-logo{color:#B8860B;font-size:13px;font-weight:700;letter-spacing:0.12em}
 .tb-ver{font-size:9px;color:#6E6A5E;font-family:monospace;letter-spacing:.03em;cursor:default;-webkit-app-region:no-drag}
 .tb-ver:hover{color:#B8860B}
@@ -86,6 +86,9 @@ body.remote-view{background:#1A1A1A!important;overflow:auto!important;height:aut
 .rm-btns button:hover{background:#3A3A3A}
 .rm-btns .rm-go{background:#E9C46A;color:#1A1A1A}
 .rm-btns .rm-x{background:#7A2B2B}
+.rm-size{display:flex;align-items:center;gap:10px;margin:2px 0 10px;font-size:13px;color:#CCC}.rm-size input{flex:1;accent-color:#E9C46A}.rm-size b{width:44px;text-align:right;color:#E9C46A}
+.rm-size select{flex:1;background:#2A2A2A;color:#EEE;border:1px solid #444;border-radius:6px;padding:6px}
+.rm-pos{display:flex;gap:6px;margin-bottom:10px}.rm-pos button{flex:1;padding:8px 4px;font-size:12px;font-weight:600;border:0;border-radius:6px;background:#2A2A2A;color:#EEE;cursor:pointer}.rm-pos button:hover{background:#3A3A3A}
 .rm-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:12px}
 .rm-item:hover{background:#262626}
 .rm-item.live{background:#4A1D22;outline:1px solid #E63946}
@@ -103,15 +106,16 @@ body.remote-view{background:#1A1A1A!important;overflow:auto!important;height:aut
 .tb-btn:hover{border-color:#B8860B;color:#fff}
 .tb-right{margin-left:auto;display:flex;align-items:center;gap:10px;-webkit-app-region:no-drag}
 .tb-save{font-size:10px;color:#666}
-.winbtns{display:flex;gap:6px}
+.winbtns{display:flex;gap:9px}
 .wb{width:12px;height:12px;border-radius:50%;border:none;cursor:pointer}
 .wb-c{background:#FF5F56}.wb-m{background:#FFBD2E}.wb-x{background:#27C93F}
 
 /* Toolbar */
-.toolbar{height:42px;background:#2C2A24;border-bottom:1px solid #3A372F;display:flex;align-items:center;gap:6px;padding:0 12px;flex-shrink:0;overflow-x:auto;overflow-y:hidden}
-.toolbar::-webkit-scrollbar{height:5px}.toolbar::-webkit-scrollbar-thumb{background:#4A4637;border-radius:3px}
-.tool{flex:none;background:#37342C;border:1px solid #45412F;color:#E6E1D2;font-size:12px;padding:5px 11px;border-radius:6px;cursor:pointer;white-space:nowrap}
-.tool:hover{border-color:#B8860B;background:#403B2E;color:#fff}
+/* wraps onto extra rows when the window is narrow, so nothing is ever cut off */
+.toolbar{min-height:42px;background:linear-gradient(#2F2D26,#2A2822);border-bottom:1px solid #3A372F;display:flex;flex-wrap:wrap;align-items:center;gap:6px 6px;padding:6px 12px;flex-shrink:0}
+.tool{flex:none;background:#37342C;border:1px solid #45412F;color:#E6E1D2;font-size:12px;padding:5px 11px;border-radius:8px;cursor:pointer;white-space:nowrap;transition:background .12s,border-color .12s,transform .12s}
+.tool:hover{border-color:#B8860B;background:#403B2E;color:#fff;transform:translateY(-1px)}
+.tool:active{transform:translateY(0)}
 .tsep{width:1px;height:20px;background:#45412F;margin:0 4px}
 .tlabel{font-size:11px;color:#A9A293;display:flex;align-items:center;gap:5px;cursor:pointer}
 .thint{margin-left:auto;font-size:10px;color:#7C7768}
@@ -250,6 +254,7 @@ body.remote-view{background:#1A1A1A!important;overflow:auto!important;height:aut
 .ck-done{text-decoration:line-through;opacity:0.55}
 .el-image img{display:block;width:100%;height:auto;border-radius:4px;box-shadow:0 2px 10px rgba(0,0,0,0.15);pointer-events:none}
 .el-image.has-h img{height:100%}
+.el-image.is-cutout img{box-shadow:none!important;border-radius:0;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35))}
 .el-chip{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #DDD7C8;border-radius:8px;padding:8px 12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);max-width:300px}
 .chip-ic{font-size:20px;flex-shrink:0}
 .chip-tx{display:flex;flex-direction:column;min-width:0}
@@ -632,9 +637,9 @@ body.presenting .present-hud{display:block}
   <div class="tb-right">
     <span class="tb-save" id="saveState">✓ Saved</span>
     <div class="winbtns">
-      <button class="wb wb-c" onclick="window.nabu.close()"></button>
-      <button class="wb wb-m" onclick="window.nabu.minimize()"></button>
-      <button class="wb wb-x" onclick="window.nabu.maximize()"></button>
+      <button class="wb wb-x" onclick="window.nabu.maximize()" title="Maximize"></button>
+      <button class="wb wb-m" onclick="window.nabu.minimize()" title="Minimize"></button>
+      <button class="wb wb-c" onclick="window.nabu.close()" title="Close"></button>
     </div>
   </div>
 </div>
@@ -705,7 +710,7 @@ body.presenting .present-hud{display:block}
     </div>
     <div class="fg">
       <label>Position<select id="cutPos"><option value="">Center (default)</option><option value="lower">Lower third</option><option value="left">Left half</option><option value="right">Right half</option><option value="full">Full screen</option></select></label>
-      <label>Animation<select id="cutAnim"><option value="">Default (pop)</option><option value="pop">Pop</option><option value="fade">Fade</option><option value="slide">Slide up</option></select></label>
+      <label>Animation<select id="cutAnim"><option value="">Default (curved swing)</option><option value="arc">Curved swing from the corner</option><option value="pop">Pop</option><option value="fade">Fade</option><option value="slide">Slide up</option></select></label>
       <label>Size (0.1–1 of frame)<input id="cutFit" type="number" step="0.05" min="0.1" max="1" placeholder="0.8"></label>
       <label>Target seconds<input id="cutDur" type="number" min="1" placeholder="pacing timer"></label>
       <label>When target is reached<select id="cutAuto"><option value="">Just turn the timer red</option><option value="1">Auto-hide the cut-in</option></select></label>
@@ -756,6 +761,27 @@ body.presenting .present-hud{display:block}
       <button style="background:none;border:none;color:#888;font-size:16px;cursor:pointer" onclick="closeObsPanel()">✕</button></span>
     </div>
     <div style="overflow-y:auto;padding:14px 18px" class="obs-pane">
+      <h4>⚡ One-click setup <span>— easiest way</span></h4>
+      <div style="margin:6px 0 4px"><button class="mb mb-p" onclick="obsAutoSetupClick()">⚡ Set up OBS for me</button>
+        <button class="mb mb-s" onclick="window.nabu.openRemoteWindow()">🎛 Open cut-in buttons</button></div>
+      <div id="obsAutoMsg" style="font-size:11px;color:#aaa;margin-bottom:8px;line-height:1.5">Adds a transparent overlay to your current OBS scene and opens a small window with <b>Next / Previous / Hide</b> buttons. Shortcuts Ctrl+Alt+→ / ← / ↓ work too.</div>
+
+      <h4>📐 Where images appear <span>— drag the gold box, pull its corner to resize</span></h4>
+      <div id="lyStage" style="position:relative;width:100%;aspect-ratio:16/9;background:#0b0b0b;border:1px solid #333;border-radius:6px;overflow:hidden;touch-action:none;user-select:none">
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#2a2a2a;font-size:22px;font-weight:700;letter-spacing:2px;pointer-events:none">YOUR VIDEO</div>
+        <div id="lyBox" style="position:absolute;border:2px solid #E9C46A;background:rgba(233,196,106,.22);cursor:move;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#E9C46A;font-size:11px;font-weight:700">IMAGE
+          <div id="lyHandle" style="position:absolute;right:-6px;bottom:-6px;width:12px;height:12px;background:#E9C46A;border-radius:3px;cursor:nwse-resize"></div></div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 2px">
+        <button class="mb mb-s" onclick="lyPreset('left')">⬅ Left</button><button class="mb mb-s" onclick="lyPreset('center')">⬛ Center</button><button class="mb mb-s" onclick="lyPreset('right')">➡ Right</button>
+        <button class="mb mb-p" onclick="lyTest()">▶ Show it in OBS now</button></div>
+      <div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;font-size:12px;color:#ccc;margin:8px 0">
+        <span>Stroke</span><input type="range" id="lyStroke" min="0" max="20" oninput="lyStyleChange()"><input type="color" id="lyColor" value="#ffffff" oninput="lyStyleChange()" style="width:34px;height:24px;padding:0;border:0;background:none">
+        <span>Rounded corners</span><input type="range" id="lyRadius" min="0" max="80" oninput="lyStyleChange()"><span></span>
+        <span>Shadow</span><label style="grid-column:2/4"><input type="checkbox" id="lyShadow" onchange="lyStyleChange()"> soft drop shadow</label>
+      </div>
+      <div style="font-size:11px;color:#888;margin-bottom:8px">Each image is centred inside this box and shrunk to fit. One asset can override it: right-click → Cut-in settings → Position.</div>
+
       <h4>1 · Overlay links <span>— paste into OBS Browser Sources</span></h4>
       <div class="lk"><span><b>Cut-in</b><small>one asset at a time</small></span><code id="obsLink_solo"></code><button class="mb mb-s" onclick="copyObsKind('solo')">Copy</button></div>
       <div class="lk"><span><b>Mirror</b><small>whole board</small></span><code id="obsLink_mirror"></code><button class="mb mb-s" onclick="copyObsKind('mirror')">Copy</button></div>
@@ -1486,7 +1512,7 @@ function detachAsset(id){
 // ── Version / build stamp ─────────────────────────────────────
 // APP_VERSION is bumped by hand; BUILD_DATE is auto-stamped by deploy.ps1
 // (it replaces the 2026-07-04 token in the deployed copy each deploy).
-const APP_VERSION = '1.12.0';
+const APP_VERSION = '1.13.0';
 const BUILD_DATE  = '2026-10-07';
 (function stampVersion(){
   const dated = /^\d{4}-\d{2}-\d{2}/.test(BUILD_DATE);
@@ -1535,7 +1561,7 @@ async function init(){
   renumberTopLevel(); // self-heal any gaps left by older saves before this fix existed
   document.getElementById('boardTitle').value = board.title || 'Untitled Board';
   applyVP();
-  render();
+  render(); cutReset();   // fresh start: clear any image left on the OBS overlay from a previous session
   startAutoSaveInterval();
   // Edits made in Presenter Notes' Edit mode arrive here over IPC (not the
   // one-way HTTP/SSE relay) and land exactly like a normal Commentary edit.
@@ -1560,6 +1586,7 @@ function setupObsView(){
   }
   render(); applyVP();
   const es = new EventSource('/obs-events' + kq('?'));
+  es.onerror = () => { if (soloView) soloShow({ id: null }); };   // app closed / connection lost → never leave an image stuck on screen
   es.onmessage = ev => {
     let m; try { m = JSON.parse(ev.data); } catch(e){ return; }
     if (m.type === 'show'){ if (soloView) soloShow(m); return; }
@@ -2128,7 +2155,7 @@ function elHtml(el){
       return '';
     }).join('');
     const annotSvg = `<svg class="annot-svg${el.id===selectedId&&annotMode?' drawing':''}" id="annsvg-${el.id}" data-elid="${el.id}"><defs><marker id="ann-arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#E74C3C"/></marker></defs>${annotSvgContent}</svg>`;
-    return `<div class="el el-image${sel}${hasH}" data-id="${el.id}" style="${pos}${colorRingStyle(el)}">
+    return `<div class="el el-image${el.cutout?' is-cutout':''}${sel}${hasH}" data-id="${el.id}" style="${pos}${colorRingStyle(el)}">
       ${SN}${ADD}${PH}${CT}<img src="${el.src}" alt="" draggable="false">${annotSvg}
       <div class="rz rz-nw" data-dir="nw"></div>
       <div class="rz rz-n"  data-dir="n"></div>
@@ -4045,6 +4072,8 @@ function openCtxMenu(e, el){
     el.type==='frame' ? ['🖼 Export as PNG', ()=>{ exportFrame(el.id,'png'); }] : null,
     el.type==='frame' ? ['📑 Duplicate as variant', ()=>{ dupFrame(el.id); }] : null,
     el.type==='frame' ? ['🎨 Frame background…', ()=>{ setFrameBg(el.id); }] : null,
+    el.type==='image' && !el.cutout ? ['✂ Remove background', ()=>{ cutoutImages(selectedIds.has(el.id) && selectedIds.size > 1 ? [...selectedIds] : [el.id]); }] : null,
+    el.type==='image' && el.cutout ? ['↩ Restore original background', ()=>{ cutoutRestore(el.id); }] : null,
     el.type!=='frame' ? ['🗒 Commentary…', ()=>{ openNotesEditor(el.id); }] : null,
     el.type!=='frame' ? ['🎬 Cut-in settings…', ()=>{ openCutEditor(el.id); }] : null,
     ['🎨 Color tag', ()=>{ setTimeout(updateColorBar,0); }],
@@ -4067,6 +4096,59 @@ function openCtxMenu(e, el){
 function closeCtxMenu(){ const m=document.getElementById('ctxMenu'); if(m) m.remove(); }
 document.addEventListener('mousedown', e => { if(!e.target.closest('#ctxMenu')) closeCtxMenu(); }, true);
 
+// ── Photo cutouts (offline AI; model downloads once, on first use) ────────────
+let _cutoutBusy = false;
+function cutoutImg(src){ return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('Could not read the image')); i.src = src; }); }
+async function cutoutOne(el){
+  const N = 1024, img = await cutoutImg(el.src);
+  const W = img.naturalWidth, H = img.naturalHeight;
+  const c = document.createElement('canvas'); c.width = c.height = N; const cx = c.getContext('2d', { willReadFrequently:true });
+  cx.drawImage(img, 0, 0, N, N);
+  const px = cx.getImageData(0, 0, N, N).data, f = new Float32Array(3 * N * N);
+  const mean = [0.485, 0.456, 0.406], plane = N * N;
+  for (let i = 0; i < plane; i++){ for (let k = 0; k < 3; k++) f[k * plane + i] = px[i * 4 + k] / 255 - mean[k]; }
+  const r = await window.nabu.cutoutRun(f);
+  if (!r || !r.success) throw new Error((r && r.error) || 'Cutout failed');
+  const m = r.mask; let mn = Infinity, mx = -Infinity;
+  for (let i = 0; i < m.length; i++){ if (m[i] < mn) mn = m[i]; if (m[i] > mx) mx = m[i]; }
+  const rng = (mx - mn) || 1, mc = document.createElement('canvas'); mc.width = mc.height = N;
+  const mi = mc.getContext('2d').createImageData(N, N);
+  for (let i = 0; i < plane; i++){ const a = (m[i] - mn) / rng; mi.data[i * 4 + 3] = Math.max(0, Math.min(255, Math.round(a * a * (3 - 2 * a) * 255))); }   // smoothstep tightens the edge
+  mc.getContext('2d').putImageData(mi, 0, 0);
+  const out = document.createElement('canvas'); out.width = W; out.height = H; const ox = out.getContext('2d');
+  ox.drawImage(img, 0, 0); ox.globalCompositeOperation = 'destination-in'; ox.imageSmoothingQuality = 'high'; ox.drawImage(mc, 0, 0, W, H);
+  return out.toDataURL('image/png');
+}
+async function cutoutImages(ids){
+  if (_cutoutBusy){ toast('Already working on a cutout…', true); return; }
+  const els = ids.map(elById).filter(e => e && e.type === 'image' && !e.cutout && typeof e.src === 'string' && e.src.startsWith('data:'));
+  if (!els.length){ toast('Select an image first'); return; }
+  _cutoutBusy = true;
+  try {
+    const st = await window.nabu.cutoutStatus();
+    if (!st.ready){
+      if (!confirm('Removing backgrounds runs on your PC (nothing is uploaded).\n\nIt needs a one-time download of the AI model (about ' + st.sizeMB + ' MB). Download it now?')){ return; }
+      let off = null; window.nabu.onCutoutProgress(p => toast('Downloading AI model… ' + p.pct + '%', true, 2500));
+      toast('Downloading AI model…', true, 4000);
+      const d = await window.nabu.cutoutPrepare();
+      if (!d.success){ toast('Download failed: ' + d.error, true, 8000); return; }
+    }
+    pushHistory();
+    for (let i = 0; i < els.length; i++){
+      toast(`✂ Removing background ${i + 1}/${els.length}…`, true, 15000);
+      const el = els[i], png = await cutoutOne(el);
+      el.srcOrig = el.src; el.src = png; el.cutout = true;
+      render(); markDirty(); obsPushBoard();
+    }
+    toast('✓ Background removed' + (els.length > 1 ? ' from ' + els.length + ' images' : '') + ' — right-click → Restore to undo', true, 4000);
+  } catch(e){ toast('Cutout failed: ' + e.message, true, 8000); }
+  finally { _cutoutBusy = false; }
+}
+function cutoutRestore(id){
+  const el = elById(id); if (!el || !el.srcOrig) return;
+  pushHistory(); el.src = el.srcOrig; delete el.srcOrig; el.cutout = false;
+  render(); markDirty(); obsPushBoard(); toast('Original photo restored');
+}
 function sendToScript(el){
   const text = el.text || el.name || el.url || '';
   if(!text){ toast('Nothing to send'); return; }
@@ -4423,7 +4505,7 @@ async function newBoard(){
     filePath = r.filePath; board = r.data;
     selectedId = editingId = null;
     document.getElementById('boardTitle').value = board.title;
-    render(); toast('New board');
+    render(); cutReset(); toast('New board');
   }
 }
 async function openBoard(){
@@ -4435,7 +4517,7 @@ async function openBoard(){
     if (!Array.isArray(board.connectors)) board.connectors = [];
     selectedId = editingId = null;
     document.getElementById('boardTitle').value = board.title || 'Untitled Board';
-    render();
+    render(); cutReset();
     document.getElementById('saveState').textContent = '✓ Saved';
   }
 }
@@ -4546,7 +4628,7 @@ async function restoreFile(fp){
     if (!Array.isArray(board.connectors)) board.connectors = [];
     selectedId = editingId = null;
     document.getElementById('boardTitle').value = board.title || 'Untitled Board';
-    render();
+    render(); cutReset();
     closeRestorePanel();
     toast('Restored: ' + f.name);
     document.getElementById('saveState').textContent = '✓ Saved';
@@ -4708,23 +4790,25 @@ init();
 
 // ── Auto-update button ────────────────────────────────────────────────────────
 let _updState='idle';
+let _updSince=0;
 function updateClick(){
   if(!window.nabu||!window.nabu.updateCheck) return;
   if(_updState==='available') return window.nabu.updateDownload();
   if(_updState==='ready') return window.nabu.updateInstall();
-  if(_updState==='checking'||_updState==='downloading') return;
+  // 'Checking…' older than 25s means it got stuck — allow a fresh check instead of a dead button
+  if((_updState==='checking'&&Date.now()-_updSince<25000)||_updState==='downloading') return;
   window.nabu.updateCheck();
 }
 function setupUpdater(){
   if(!window.nabu||!window.nabu.onUpdateStatus) return;
   const btn=document.getElementById('updBtn'); if(!btn) return;
   window.nabu.onUpdateStatus(s=>{
-    _updState=s.state; btn.classList.toggle('ready',s.state==='ready'||s.state==='available');
+    _updState=s.state; _updSince=Date.now(); btn.classList.toggle('ready',s.state==='ready'||s.state==='available');
     const src = s.source==='folder' ? ' (Updates folder)' : '';
     const m={checking:['⟳ Checking…',''],none:['✓ Up to date','You have the latest version.'],
       available:['⬇ Update to v'+s.version,'New version v'+s.version+src+' found — click again to continue.'],
       downloading:['⬇ '+s.percent+'%',''],ready:['↻ Restart to update','Ready — click to restart and install v'+s.version+'.'],
-      dev:['⟳ Update','Updates only work in the installed app (not npm start).'],error:['⚠ Retry update',s.message||'Update check failed.']}[s.state];
+      dev:['⟳ Update','You are running from source (npm start), so online updates are off. The installed app updates normally.'],error:['⚠ Retry update',s.message||'Update check failed.']}[s.state];
     if(m){ btn.textContent=m[0]; if(m[1]) toast(m[1], true, s.state==='error' ? 7000 : 3500); }
     if(s.state==='none'||s.state==='dev'||s.state==='error') setTimeout(()=>{ if(_updState===s.state){ btn.textContent='⟳ Update'; btn.classList.remove('ready'); } },6000);
   });
@@ -4746,14 +4830,15 @@ function soloShow(m){
   const P = new URLSearchParams(location.search);
   const el0 = m.id ? elById(m.id) : null, cut = (el0 && el0.cut) || {};
   const pos = cut.pos || P.get('pos') || 'center';
-  const anim = cut.anim || P.get('anim') || 'pop';
-  const fit = cut.fit || parseFloat(P.get('fit')) || (pos === 'full' ? 0.96 : 0.8), maxS = parseFloat(P.get('max')) || 2.5;
+  const useLay = !cut.pos && !P.get('pos') && m.layout && m.layout.w > 0 && m.layout.h > 0;   // global placement box from the 📡 OBS panel
+  const anim = cut.anim || P.get('anim') || 'arc';
+  const fit = cut.fit || parseFloat(P.get('fit')) || (pos === 'full' ? 0.96 : 0.8), maxS = parseFloat(P.get('max')) || (el0 && ['text','quote','sticky'].includes(el0.type) ? 6 : 4);   // notes may grow much larger so text reads well on video
   const layer = document.getElementById('soloLayer');
   if (_soloEl){
     const old = _soloEl; _soloEl = null;
     try { old.querySelectorAll('video,audio').forEach(v => v.pause()); } catch(e){}
     if (old._pose) old._pose(false);
-    setTimeout(() => old.remove(), 500);
+    setTimeout(() => old.remove(), 700);
   }
   if (!m.id || !el0) return;
   const el = el0;
@@ -4764,10 +4849,50 @@ function soloShow(m){
     wrap.innerHTML = elHtml(el);
     if (el.type === 'sound'){ media = document.createElement('audio'); media.src = toFileUrl(el.path); wrap.appendChild(media); }
   }
+  { const st = m.style, n0 = wrap.firstElementChild;   // stroke / rounded corners / shadow from the 📡 OBS panel
+    if (st && n0){
+      const sh = (st.stroke > 0 ? `0 0 0 ${st.stroke}px ${st.color || '#fff'}` : '') + (st.shadow ? (st.stroke > 0 ? ', ' : '') + '0 10px 30px rgba(0,0,0,.55)' : '');
+      if (el0 && el0.cutout){   // transparent PNG: draw the stroke around the subject itself, not a rectangle
+        const w = st.stroke || 0, c = st.color || '#fff', d = [[w,0],[-w,0],[0,w],[0,-w],[w*.7,w*.7],[-w*.7,w*.7],[w*.7,-w*.7],[-w*.7,-w*.7]];
+        const f = (w > 0 ? d.map(v => `drop-shadow(${v[0].toFixed(1)}px ${v[1].toFixed(1)}px 0 ${c})`).join(' ') : '') + (st.shadow ? ' drop-shadow(0 10px 18px rgba(0,0,0,.55))' : '');
+        n0.style.setProperty('box-shadow', 'none', 'important');
+        const im = n0.querySelector('img'); if (im){ im.style.setProperty('box-shadow', 'none', 'important'); im.style.setProperty('filter', f || 'none', 'important'); }
+      } else {
+      n0.style.setProperty('box-shadow', sh || 'none', 'important');
+      if (st.radius > 0){ n0.style.setProperty('border-radius', st.radius + 'px', 'important'); n0.style.overflow = 'hidden'; }
+      }
+    } }
   if (cut.sfx){ try { const a = new Audio(toFileUrl(cut.sfx)); a.play().catch(() => {}); } catch(e){} }
   layer.appendChild(wrap); _soloEl = wrap;
   let s = 1;
+  // 'arc': the image swings in along a curved path from the upper corner on its side, growing from
+  // tiny to full size, and leaves the same way in reverse.
+  const arcFrames = (G, entering) => {
+    const dx = G.p0x - G.cx, dy = G.p0y - G.cy, d = Math.hypot(dx, dy) || 1;
+    const nx = -dy / d, ny = dx / d, side = G.cx < G.W / 2 ? 1 : -1;   // bow toward the middle of the frame, never off-screen
+    const bow = d * 0.38 * side, N = 30, fr = [];
+    for (let i = 0; i <= N; i++){
+      const u = i / N, t = entering ? 1 - Math.pow(1 - u, 3) : 1 - Math.pow(u, 3);   // ease-out in, ease-in out
+      const rx = dx * (1 - t) + nx * bow * Math.sin(Math.PI * t), ry = dy * (1 - t) + ny * bow * Math.sin(Math.PI * t);
+      const k = 0.04 + 0.96 * t;
+      fr.push({ transform: `translate(calc(-50% + ${rx.toFixed(1)}px), calc(-50% + ${ry.toFixed(1)}px)) scale(${(s * k).toFixed(4)})`, opacity: Math.min(1, t * 2.5) });
+    }
+    return fr;
+  };
   wrap._pose = on => {
+    if (anim === 'arc' && wrap._geo){
+      wrap.style.transition = 'none';
+      const fin = `translate(-50%,-50%) scale(${s})`;
+      if (on){
+        if (wrap._entered){ try { wrap._anim && wrap._anim.cancel(); } catch(e){} wrap.style.transform = fin; wrap.style.opacity = 1; return; }
+        wrap._entered = true;
+        wrap.style.transform = fin; wrap.style.opacity = 1;
+        wrap._anim = wrap.animate(arcFrames(wrap._geo, true), { duration: 750, easing: 'linear' });
+      } else {
+        wrap._anim = wrap.animate(arcFrames(wrap._geo, false), { duration: 600, easing: 'linear', fill: 'forwards' });
+      }
+      return;
+    }
     const sc = on ? s : (anim === 'pop' ? s * 0.9 : s);
     const ty = (!on && anim === 'slide') ? 'calc(-50% + 40px)' : '-50%';
     wrap.style.transform = `translate(-50%,${ty}) scale(${sc})`;
@@ -4782,8 +4907,11 @@ function soloShow(m){
     let bw = W * fit, bh = H * fit, cx = W / 2, cy = H / 2;
     if (pos === 'lower'){ bw = Math.min(bw, W * 0.6); bh = H * 0.3; cy = H - bh / 2 - H * 0.05; }
     else if (pos === 'left' || pos === 'right'){ bw = W * 0.46; cx = W * (pos === 'left' ? 0.27 : 0.73); }
+    else if (useLay){ bw = W * m.layout.w; bh = H * m.layout.h; cx = W * m.layout.cx; cy = H * m.layout.cy; }
     s = Math.min(bw / w, bh / h, maxS);
     wrap.style.left = cx + 'px'; wrap.style.top = cy + 'px';
+    wrap._geo = { cx, cy, W, H, p0x: cx < W / 2 ? W * 0.05 : W * 0.95, p0y: H * 0.05 };
+    if (anim === 'arc'){ shown = true; wrap._pose(true); return; }
     if (!shown){ shown = true; wrap._pose(false); void wrap.offsetWidth; wrap._pose(true); }
     else wrap._pose(true);
   };
@@ -4815,7 +4943,17 @@ function setupRemoteView(){
   document.body.classList.add('remote-view');
   board = { title:'', elements:[], connectors:[] };
   const ui = document.createElement('div'); ui.id = 'remoteUI';
-  ui.innerHTML = `<span id="rmNow">Nothing on screen</span><div class="rm-btns"><button onclick="rmCmd('prev')">◀ Prev</button><button class="rm-go" onclick="rmCmd('next')">Next ▶</button><button class="rm-x" onclick="rmCmd('hide')">✕ Hide</button></div><div id="rmList"></div>`;
+  ui.innerHTML = `<span id="rmNow">Nothing on screen</span><div class="rm-btns"><button onclick="rmCmd('prev')">◀ Prev</button><button class="rm-go" onclick="rmCmd('next')">Next ▶</button><button class="rm-x" onclick="rmCmd('hide')">✕ Hide</button></div>
+    <div class="rm-size"><span>Size</span><input type="range" id="rmSize" min="40" max="200" step="5" title="Make the image smaller or bigger — live"><b id="rmSizeV">100%</b></div>
+    <div class="rm-pos"><button onclick="rmCmd('pos','left')">⬅ Left</button><button onclick="rmCmd('pos','center')">Center</button><button onclick="rmCmd('pos','right')">Right ➡</button></div>
+    <div class="rm-size"><span>Auto-hide</span><select id="rmAuto"><option value="0">Off</option><option value="5">5 s</option><option value="8">8 s</option><option value="10">10 s</option><option value="15">15 s</option><option value="20">20 s</option><option value="30">30 s</option></select></div>
+    <div id="rmList"></div>`;
+  { const au = document.getElementById('rmAuto'); try { au.value = String(parseInt(localStorage.getItem('nabuAutoHide'), 10) || 0); } catch(e){}
+    if (au.value === '') au.value = '0'; au.onchange = () => rmCmd('autohide', au.value); }
+  { const sl = document.getElementById('rmSize'), lab = document.getElementById('rmSizeV'); let t = null;
+    let v0 = 100; try { v0 = parseInt(localStorage.getItem('nabuCutSize'), 10) || 100; } catch(e){}
+    sl.value = v0; lab.textContent = v0 + '%';
+    sl.oninput = () => { lab.textContent = sl.value + '%'; clearTimeout(t); t = setTimeout(() => rmCmd('size', sl.value), 90); }; }
   document.body.appendChild(ui);
   const es = new EventSource('/obs-events' + kq('?'));
   es.onmessage = ev => {
@@ -4915,9 +5053,18 @@ async function obsActions(it){
   if (it && obsSt.recording && pr.autoChapter)
     window.nabu.obsRequest('CreateRecordChapter', { chapterName: (c.chapter || (it.label + ' ' + cutTitle(el))).slice(0, 80) });
 }
+let _autoHideT = null;
 function showCmd(c){
   if (!c) return;
   if (c.a === 'laser'){ toggleLaser(); return; }
+  if (c.a === 'size'){   // live bigger/smaller from the buttons window slider (percent of the placement box)
+    const v = Math.max(30, Math.min(250, parseInt(c.n, 10) || 100));
+    try { localStorage.setItem('nabuCutSize', String(v)); } catch(e){}
+    lyResend(); return;
+  }
+  if (c.a === 'pos'){ if (LY_PRESETS[c.n]) lyPreset(c.n); return; }
+  if (c.a === 'autohide'){ const v = Math.max(0, Math.min(300, parseInt(c.n, 10) || 0)); try { localStorage.setItem('nabuAutoHide', String(v)); } catch(e){} toast(v ? `⏱ Images hide themselves after ${v}s` : '⏱ Auto-hide off', true); return; }
+  clearTimeout(_autoHideT);
   const items = nvRundownItems();
   if (!items.length){ toast('Nothing numbered to show yet — assets need serial numbers', true); return; }
   let i = _showIdx;
@@ -4934,7 +5081,13 @@ function showCmd(c){
   const it = items[i], cut = (it && it.el.cut) || {};
   _liveId = it ? it.el.id : null;
   markLive();
-  obsSend({ type:'show', id: _liveId, idx:i, total:items.length, label: it ? it.label : '', ts: Date.now(), target: cut.dur || 0 });
+  obsSend({ type:'show', id: _liveId, idx:i, total:items.length, label: it ? it.label : '', ts: Date.now(), target: cut.dur || 0, layout: cutLayoutGet(), style: cutStyleGet() });
+  { // global auto-hide (a per-asset "auto-hide after N s" in Cut-in settings wins; video/sound hide when they end)
+    let ah = 0; try { ah = parseInt(localStorage.getItem('nabuAutoHide'), 10) || 0; } catch(e){}
+    if (it && ah > 0 && !(cut.auto && cut.dur > 0) && it.el.type !== 'video' && it.el.type !== 'sound'){
+      const my = i; _autoHideT = setTimeout(() => { if (_showIdx === my) showCmd({ a:'hide' }); }, ah * 1000);
+    }
+  }
   logCut(it); obsActions(it); updateCutHud();
   toast(it ? `🎬 LIVE ${it.label}  (${i+1}/${items.length})` : '🎬 Cut-in hidden');
 }
@@ -5051,6 +5204,80 @@ async function obsConnectClick(){
     password: document.getElementById('obsPwd').value, remember: document.getElementById('obsRemember').checked, autoConnect: document.getElementById('obsAuto').checked });
   if (!r.success){ obsSt.error = r.error || 'Failed'; obsSt.connected = false; }
   updateObsUi();
+}
+// ── Cut-in placement box (global, remembered between boards) ─────────────────
+const LY_PRESETS = { left:{cx:.2,cy:.5,w:.34,h:.7}, center:{cx:.5,cy:.5,w:.8,h:.8}, right:{cx:.8,cy:.5,w:.34,h:.7} };
+function cutSizeGet(){ try { const v = parseInt(localStorage.getItem('nabuCutSize'), 10); if (v >= 30 && v <= 250) return v; } catch(e){} return 100; }
+function cutLayoutGet(raw){   // raw = the box as drawn in the panel; default = box × the live size slider
+  let l = null;
+  try { l = JSON.parse(localStorage.getItem('nabuCutLayout') || 'null'); } catch(e){}
+  if (!(l && l.w > 0 && l.h > 0)) l = Object.assign({}, LY_PRESETS.left);
+  if (raw) return l;
+  const k = cutSizeGet() / 100;
+  return { cx:l.cx, cy:l.cy, w:Math.min(1, l.w * k), h:Math.min(1, l.h * k) };
+}
+function cutStyleGet(){
+  try { const s = JSON.parse(localStorage.getItem('nabuCutStyle') || 'null'); if (s) return s; } catch(e){}
+  return { stroke:0, color:'#ffffff', radius:0, shadow:false };
+}
+function lyStyleChange(){
+  const s = { stroke: +document.getElementById('lyStroke').value, color: document.getElementById('lyColor').value,
+    radius: +document.getElementById('lyRadius').value, shadow: document.getElementById('lyShadow').checked };
+  try { localStorage.setItem('nabuCutStyle', JSON.stringify(s)); } catch(e){}
+  clearTimeout(lyStyleChange._t); lyStyleChange._t = setTimeout(lyResend, 150);
+}
+function lyStyleLoad(){
+  const s = cutStyleGet(), set = (id, k, v) => { const n = document.getElementById(id); if (n) n[k] = v; };
+  set('lyStroke','value',s.stroke); set('lyColor','value',s.color); set('lyRadius','value',s.radius); set('lyShadow','checked',!!s.shadow);
+}
+function cutLayoutSet(l){ try { localStorage.setItem('nabuCutLayout', JSON.stringify(l)); } catch(e){} }
+function lyRender(){
+  const b = document.getElementById('lyBox'); if (!b) return; const l = cutLayoutGet(true);
+  b.style.left = ((l.cx - l.w/2) * 100) + '%'; b.style.top = ((l.cy - l.h/2) * 100) + '%';
+  b.style.width = (l.w * 100) + '%'; b.style.height = (l.h * 100) + '%';
+}
+function cutReset(){   // board swapped or app (re)started → nothing is live any more
+  _showIdx = -1; _liveId = null; markLive();
+  obsSend({ type:'show', id:null });
+}
+function lyResend(){
+  if (!_liveId) return;
+  const items = nvRundownItems(), it = items[_showIdx];
+  obsSend({ type:'show', id:_liveId, idx:_showIdx, total:items.length, label: it ? it.label : '', ts: Date.now(), target: 0, layout: cutLayoutGet(), style: cutStyleGet() });
+}
+function lyPreset(k){ cutLayoutSet(Object.assign({}, LY_PRESETS[k])); lyRender(); lyResend(); }
+function lyTest(){ if (_liveId) lyResend(); else showCmd({ a:'next' }); }
+(function lyInit(){
+  const stage = document.getElementById('lyStage'), box = document.getElementById('lyBox'), hd = document.getElementById('lyHandle');
+  if (!stage || !box) return;
+  let mode = null, st = null;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const down = (e, m) => { e.preventDefault(); e.stopPropagation(); mode = m; const r = stage.getBoundingClientRect(); st = { x:e.clientX, y:e.clientY, r, l:cutLayoutGet(true) }; (m === 'move' ? box : hd).setPointerCapture(e.pointerId); };
+  box.addEventListener('pointerdown', e => { if (e.target === hd) return; down(e, 'move'); });
+  hd.addEventListener('pointerdown', e => down(e, 'size'));
+  const move = e => {
+    if (!mode) return; const dx = (e.clientX - st.x) / st.r.width, dy = (e.clientY - st.y) / st.r.height, l = Object.assign({}, st.l);
+    if (mode === 'move'){ l.cx = clamp(st.l.cx + dx, l.w/2, 1 - l.w/2); l.cy = clamp(st.l.cy + dy, l.h/2, 1 - l.h/2); }
+    else { const left = st.l.cx - st.l.w/2, top = st.l.cy - st.l.h/2;
+      l.w = clamp(st.l.w + dx, .08, 1 - left); l.h = clamp(st.l.h + dy, .08, 1 - top); l.cx = left + l.w/2; l.cy = top + l.h/2; }
+    cutLayoutSet(l); lyRender();
+  };
+  const up = () => { if (mode){ mode = null; lyResend(); } };
+  box.addEventListener('pointermove', move); hd.addEventListener('pointermove', move);
+  box.addEventListener('pointerup', up); hd.addEventListener('pointerup', up);
+  lyRender(); lyStyleLoad();
+})();
+async function obsAutoSetupClick(){
+  const m = document.getElementById('obsAutoMsg'); m.style.color = '#aaa'; m.textContent = 'Setting up…';
+  const r = await window.nabu.obsAutoSetup();
+  if (r.success){
+    m.style.color = '#7CD992';
+    m.innerHTML = `✓ Done. “NabuBrainstorm Cut-ins” was ${r.created ? 'added to' : 'updated in'} scene <b>${esc(r.scene)}</b>. Use the buttons window (or Ctrl+Alt+→) to show asset 1, 2, 3… one by one.`;
+    window.nabu.obsGetSettings().then(s => { obsSt = s.status; updateObsUi(); });
+  } else if (r.needEnable){
+    m.style.color = '#FFB84D';
+    m.innerHTML = 'One thing to switch on in OBS first: <b>Tools → WebSocket Server Settings → tick “Enable WebSocket server” → OK</b>. Then click this button again.';
+  } else { m.style.color = '#FF8A8A'; m.textContent = '✗ ' + (r.error || 'Failed'); }
 }
 async function obsRec(start){
   const r = await window.nabu.obsRequest(start ? 'StartRecord' : 'StopRecord');

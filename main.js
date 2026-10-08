@@ -71,13 +71,19 @@ function externalize(data){
     if (!data || !Array.isArray(data.elements)) return data;
     const dir = ASSET_DIR(); if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     return { ...data, elements: data.elements.map(el => {
-      const m = el && typeof el.src === 'string' && /^data:(image\/[\w+.-]+);base64,/.exec(el.src);
-      if (!m || !IMG_MIME_EXT[m[1]]) return el;
-      const buf = Buffer.from(el.src.slice(m[0].length), 'base64');
-      const name = crypto.createHash('sha1').update(buf).digest('hex') + '.' + IMG_MIME_EXT[m[1]];
-      const fp = path.join(dir, name);
-      if (!fs.existsSync(fp)) fs.writeFileSync(fp, buf);
-      return { ...el, src: 'asset:' + name };
+      if (!el) return el;
+      let out = el;
+      ['src', 'srcOrig'].forEach(key => {   // srcOrig = the photo before "Remove background"
+        const m = typeof el[key] === 'string' && /^data:(image\/[\w+.-]+);base64,/.exec(el[key]);
+        if (!m || !IMG_MIME_EXT[m[1]]) return;
+        const buf = Buffer.from(el[key].slice(m[0].length), 'base64');
+        const name = crypto.createHash('sha1').update(buf).digest('hex') + '.' + IMG_MIME_EXT[m[1]];
+        const fp = path.join(dir, name);
+        if (!fs.existsSync(fp)) fs.writeFileSync(fp, buf);
+        if (out === el) out = { ...el };
+        out[key] = 'asset:' + name;
+      });
+      return out;
     }) };
   } catch(e){ return data; }   // on any failure fall back to embedding — never lose images
 }
@@ -86,12 +92,15 @@ function internalize(data){
   try {
     if (!data || !Array.isArray(data.elements)) return data;
     data.elements.forEach(el => {
-      if (!el || typeof el.src !== 'string' || !el.src.startsWith('asset:')) return;
-      const name = path.basename(el.src.slice(6));
-      try {
-        const buf = fs.readFileSync(path.join(ASSET_DIR(), name));
-        el.src = `data:${EXT_IMG_MIME[path.extname(name).slice(1)] || 'image/jpeg'};base64,${buf.toString('base64')}`;
-      } catch(e){ el.src = MISSING_IMG; }
+      if (!el) return;
+      ['src', 'srcOrig'].forEach(key => {
+        if (typeof el[key] !== 'string' || !el[key].startsWith('asset:')) return;
+        const name = path.basename(el[key].slice(6));
+        try {
+          const buf = fs.readFileSync(path.join(ASSET_DIR(), name));
+          el[key] = `data:${EXT_IMG_MIME[path.extname(name).slice(1)] || 'image/jpeg'};base64,${buf.toString('base64')}`;
+        } catch(e){ el[key] = key === 'src' ? MISSING_IMG : undefined; }
+      });
     });
   } catch(e){}
   return data;
@@ -769,8 +778,11 @@ ipcMain.handle('update-check', async () => {
   if (localUpdate){ sendUpdate('available', { version: localUpdate.version, source: 'folder' }); return { success: true }; }
   initUpdater();
   if (!autoUpdater){ sendUpdate('dev'); return { success: false, dev: true }; }
-  try { await autoUpdater.checkForUpdates(); return { success: true }; }
-  catch(e){ sendUpdate('error', { message: friendlyUpdateError(e) }); return { success: false }; }
+  // Watchdog: a hung network call must never leave the button stuck on "Checking…"
+  let settled = false;
+  const dog = setTimeout(() => { if (!settled) sendUpdate('error', { message: 'Update check timed out — check your internet and try again.' }); }, 20000);
+  try { await autoUpdater.checkForUpdates(); settled = true; clearTimeout(dog); return { success: true }; }
+  catch(e){ settled = true; clearTimeout(dog); sendUpdate('error', { message: friendlyUpdateError(e) }); return { success: false }; }
 });
 ipcMain.handle('update-download', async () => {
   if (localUpdate){ sendUpdate('ready', { version: localUpdate.version, source: 'folder' }); return { success: true }; }
@@ -787,7 +799,7 @@ ipcMain.on('update-install', () => {
     });
     app.quit(); return;
   }
-  if (autoUpdater) autoUpdater.quitAndInstall();
+  if (autoUpdater) autoUpdater.quitAndInstall(true, true);   // silent install, reopen the app afterwards
 });
 ipcMain.handle('open-updates-folder', async () => { await shell.openPath(ensureUpdatesDir()); return { success: true, dir: UPDATES_DIR() }; });
 app.whenReady().then(() => setTimeout(() => {
@@ -909,11 +921,138 @@ ipcMain.handle('obs-request', async (_, { type, data }) => {
   try { const r = await obsRequest(type, data || {}); return { success: true, data: r.responseData }; }
   catch(e){ return { success: false, error: e.message }; }
 });
+// ── One-click OBS setup ───────────────────────────────────────────────────────
+// Reads OBS's own WebSocket settings (so the user never types the password), connects, and
+// creates/updates a transparent "NabuBrainstorm Cut-ins" Browser Source in the current scene.
+const OBS_SRC_NAME = 'NabuBrainstorm Cut-ins';
+function obsWsConfig(){
+  try {
+    const p = path.join(app.getPath('appData'), 'obs-studio', 'plugin_config', 'obs-websocket', 'config.json');
+    return JSON.parse(fs.readFileSync(p, 'utf8'));
+  } catch(e){ return null; }
+}
+ipcMain.handle('obs-autosetup', async () => {
+  try {
+    const wc = obsWsConfig();
+    if (!wc) return { success: false, error: 'Could not find OBS settings. Is OBS installed and has it been opened once?' };
+    if (!wc.server_enabled) return { success: false, needEnable: true, error: 'OBS WebSocket server is switched off.' };
+    const port = wc.server_port || 4455, password = wc.auth_required ? (wc.server_password || '') : '';
+    const c = await obsConnect({ host: '127.0.0.1', port, password });
+    if (!c.success) return { success: false, error: c.error || 'Could not connect to OBS' };
+    // remember for next time (encrypted) + auto-connect at startup
+    const cfg = readConfig(); cfg.obs = { host: '127.0.0.1', port, autoConnect: true };
+    if (password && safeStorage.isEncryptionAvailable()) cfg.obsPwd = safeStorage.encryptString(password).toString('base64');
+    writeConfig(cfg);
+
+    const url = `http://127.0.0.1:${serverPort}/board.html?obs=1&mode=solo&k=${getToken()}`;
+    const vs = (await obsRequest('GetVideoSettings')).responseData;
+    const scene = (await obsRequest('GetCurrentProgramScene')).responseData.sceneName;
+    const settings = { url, width: vs.baseWidth || 1920, height: vs.baseHeight || 1080, fps: 30, shutdown: false, restart_when_active: false, reroute_audio: false };
+    const inputs = (await obsRequest('GetInputList', { inputKind: 'browser_source' })).responseData.inputs || [];
+    let created = false;
+    if (inputs.some(i => i.inputName === OBS_SRC_NAME)){
+      await obsRequest('SetInputSettings', { inputName: OBS_SRC_NAME, inputSettings: settings, overlay: true });
+      try { await obsRequest('GetSceneItemId', { sceneName: scene, sourceName: OBS_SRC_NAME }); }
+      catch(e){ await obsRequest('CreateSceneItem', { sceneName: scene, sourceName: OBS_SRC_NAME, sceneItemEnabled: true }); created = true; }
+    } else {
+      await obsRequest('CreateInput', { sceneName: scene, inputName: OBS_SRC_NAME, inputKind: 'browser_source', inputSettings: settings, sceneItemEnabled: true });
+      created = true;
+    }
+    openRemoteWindow();
+    return { success: true, scene, created };
+  } catch(e){ return { success: false, error: e.message }; }
+});
+
+// Small always-on-top window with the big Next / Previous / Hide buttons.
+let remoteWin = null;
+function openRemoteWindow(){
+  if (remoteWin && !remoteWin.isDestroyed()){ remoteWin.focus(); return true; }
+  remoteWin = new BrowserWindow({
+    width: 340, height: 560, minWidth: 260, minHeight: 300, alwaysOnTop: true,
+    title: 'NabuBrainstorm — Cut-in buttons', backgroundColor: '#111111',
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, webSecurity: false }
+  });
+  remoteWin.setMenuBarVisibility(false);
+  remoteWin.on('page-title-updated', e => e.preventDefault());
+  remoteWin.loadURL(`http://127.0.0.1:${serverPort}/board.html?remote=1&k=${getToken()}`);
+  remoteWin.on('closed', () => { remoteWin = null; });
+  return true;
+}
+ipcMain.handle('open-remote-window', () => openRemoteWindow());
+
 app.whenReady().then(() => setTimeout(() => {
   const o = obsSettings();
   if (o.autoConnect) obsConnect({ host: o.host, port: o.port, password: obsStoredPassword() });
 }, 3000));
-app.on('before-quit', () => obsDisconnect());
+app.on('before-quit', () => {
+  obsDisconnect();
+  // Clear any live cut-in from OBS so a closed app never leaves an image stuck on screen
+  const hide = JSON.stringify({ type: 'show', id: null });
+  obsClients.forEach(c => { try { c.write(`data: ${hide}\n\n`); } catch(e){} });
+});
+
+// ── Photo cutouts: offline AI background removal ──────────────────────────────
+// IS-Net "general use" (Apache-2.0, from the rembg project) run locally with onnxruntime-node.
+// The ~170 MB model is downloaded once, on the user's first click, into userData\models.
+// No images ever leave the PC. The renderer does the image pre/post-processing on a canvas.
+const CUTOUT = { file: 'isnet-general-use.onnx', size: 1024, minBytes: 150e6,
+  url: 'https://github.com/danielgatis/rembg/releases/download/v0.0.0/isnet-general-use.onnx' };
+const cutoutPath = () => path.join(app.getPath('userData'), 'models', CUTOUT.file);
+function cutoutReady(){ try { return fs.statSync(cutoutPath()).size > CUTOUT.minBytes; } catch(e){ return false; } }
+function downloadModel(url, dest, onPct, redirects = 5){
+  return new Promise((resolve, reject) => {
+    const req = https.get(url, { headers: { 'User-Agent': 'NabuBrainstorm' } }, res => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location && redirects > 0){
+        res.resume(); return downloadModel(res.headers.location, dest, onPct, redirects - 1).then(resolve, reject);
+      }
+      if (res.statusCode !== 200){ res.resume(); return reject(new Error('Download failed (HTTP ' + res.statusCode + ')')); }
+      const total = parseInt(res.headers['content-length'], 10) || 0; let got = 0, last = -1;
+      const tmp = dest + '.part'; fs.mkdirSync(path.dirname(dest), { recursive: true });
+      const out = fs.createWriteStream(tmp);
+      res.on('data', c => { got += c.length; if (total){ const p = Math.floor(got / total * 100); if (p !== last){ last = p; onPct(p); } } });
+      res.pipe(out);
+      out.on('finish', () => out.close(() => { try { fs.renameSync(tmp, dest); resolve(); } catch(e){ reject(e); } }));
+      out.on('error', reject); res.on('error', reject);
+    });
+    req.on('error', reject);
+    req.setTimeout(30000, () => req.destroy(new Error('Download timed out')));
+  });
+}
+let _cutSession = null, _cutDownloading = false;
+ipcMain.handle('cutout-status', () => ({ ready: cutoutReady(), downloading: _cutDownloading, sizeMB: 170 }));
+ipcMain.handle('cutout-prepare', async () => {
+  if (cutoutReady()) return { success: true };
+  if (_cutDownloading) return { success: false, error: 'Already downloading…' };
+  _cutDownloading = true;
+  try {
+    await downloadModel(CUTOUT.url, cutoutPath(), p => { if (win && !win.isDestroyed()) win.webContents.send('cutout-progress', { pct: p }); });
+    return { success: true };
+  } catch(e){ return { success: false, error: e.message }; }
+  finally { _cutDownloading = false; }
+});
+let _cutSessionP = null, _cutIdleT = null;
+function getCutSession(){   // CPU is fast enough (~0.5 s/image) and loads instantly; the session is freed after 2 idle minutes
+  clearTimeout(_cutIdleT);
+  _cutIdleT = setTimeout(() => {
+    const p = _cutSessionP; _cutSessionP = null; _cutSession = null;
+    if (p) p.then(sess => { try { sess.release(); } catch(e){} }).catch(() => {});
+  }, 120000);
+  if (!_cutSessionP) _cutSessionP = require('onnxruntime-node').InferenceSession
+    .create(cutoutPath(), { executionProviders: ['cpu'] }).then(s2 => (_cutSession = s2)).catch(e => { _cutSessionP = null; throw e; });
+  return _cutSessionP;
+}
+ipcMain.handle('cutout-run', async (_, buf) => {
+  try {
+    if (!cutoutReady()) return { success: false, error: 'Model not downloaded yet' };
+    const ort = require('onnxruntime-node');
+    const sess = await getCutSession();
+    const n = CUTOUT.size;
+    const input = new ort.Tensor('float32', new Float32Array(buf.buffer ? buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) : buf), [1, 3, n, n]);
+    const out = await sess.run({ [sess.inputNames[0]]: input });
+    const mask = out[sess.outputNames[0]].data;
+    return { success: true, mask: new Float32Array(mask.slice(0, n * n)) };
+  } catch(e){ return { success: false, error: e.message }; }
+});
 
 // ── Save a text file via the native dialog (EDL / CSV / chapters) ─────────────
 ipcMain.handle('save-text-file', async (_, { defaultName, content }) => {

@@ -61,6 +61,12 @@ contextBridge.exposeInMainWorld('nabu', {
   obsConnect:     (p) => ipcRenderer.invoke('obs-connect', p),
   obsDisconnect:  () => ipcRenderer.invoke('obs-disconnect'),
   obsRequest:     (type, data) => ipcRenderer.invoke('obs-request', { type, data }),
+  cutoutStatus:   () => ipcRenderer.invoke('cutout-status'),
+  cutoutPrepare:  () => ipcRenderer.invoke('cutout-prepare'),
+  cutoutRun:      (data) => ipcRenderer.invoke('cutout-run', data),
+  onCutoutProgress: (cb) => ipcRenderer.on('cutout-progress', (_, p) => cb(p)),
+  obsAutoSetup:   () => ipcRenderer.invoke('obs-autosetup'),
+  openRemoteWindow: () => ipcRenderer.invoke('open-remote-window'),
   onObsStatus:    (cb) => ipcRenderer.on('obs-status', (_, s) => cb(s)),
   openPrompterWindow: () => ipcRenderer.invoke('open-prompter-window'),
 

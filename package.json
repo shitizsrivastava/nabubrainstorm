@@ -1,6 +1,6 @@
 {
   "name": "nabu-brainstorm",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "description": "NabuBrainstorm – standalone visual brainstorm board",
   "main": "main.js",
   "author": "Shitiz Srivastava",
@@ -13,22 +13,44 @@
   "build": {
     "appId": "com.shitiz.nabubrainstorm",
     "productName": "NabuBrainstorm",
-    "directories": { "output": "dist", "buildResources": "assets" },
-    "files": ["board.html", "main.js", "preload.js", "package.json", "assets/icon.png"],
-    "win": { "target": "nsis" },
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "board.html",
+      "main.js",
+      "preload.js",
+      "package.json",
+      "assets/icon.png",
+      "!node_modules/onnxruntime-node/bin/napi-v6/darwin/**",
+      "!node_modules/onnxruntime-node/bin/napi-v6/linux/**",
+      "!node_modules/onnxruntime-node/bin/napi-v6/win32/arm64/**"
+    ],
+    "asarUnpack": [
+      "node_modules/onnxruntime-node/**"
+    ],
+    "win": {
+      "target": "nsis"
+    },
     "nsis": {
       "oneClick": true,
       "perMachine": false,
       "deleteAppDataOnUninstall": false,
       "shortcutName": "NabuBrainstorm"
     },
-    "publish": { "provider": "github", "owner": "shitizsrivastava", "repo": "nabubrainstorm" }
+    "publish": {
+      "provider": "github",
+      "owner": "shitizsrivastava",
+      "repo": "nabubrainstorm"
+    }
   },
   "devDependencies": {
     "electron": "^44.5.1",
     "electron-builder": "^26.15.3"
   },
   "dependencies": {
-    "electron-updater": "^6.8.9"
+    "electron-updater": "^6.8.9",
+    "onnxruntime-node": "^1.30.0"
   }
 }
